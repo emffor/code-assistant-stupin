@@ -166,31 +166,29 @@ function App() {
   };
 
   const processCroppedImage = async (croppedImgBase64) => {
-      setText('Fazendo upload da imagem recortada...');
-      setError('');
-      setSolution('');
-      try {
-        if (!cloudflareAccountId || !cloudflareApiToken || !apiKey) {
-           setError('Credenciais ausentes. Verifique as configurações.');
-           setIsProcessing(false);
-           return;
-        }
-        const imageUrl = await AIService.uploadToCloudflare(croppedImgBase64, cloudflareAccountId, cloudflareApiToken);
-        if (!imageUrl) {
-           throw new Error('Falha no upload da imagem para o Cloudflare.');
-        }
-        setText('Analisando imagem com Gemini...');
-        const aiSolution = await AIService.generateSolutionFromUrl(imageUrl, apiKey);
-        setSolution(aiSolution);
-        setText('');
-      } catch (err) {
-         console.error('Erro no processamento da imagem recortada:', err);
-         setError(`Erro: ${err.message || 'Falha ao processar/analisar imagem.'}`);
-         setSolution('');
-         setText('');
-      } finally {
+    setText('Processando imagem...');
+    setError('');
+    setSolution('');
+    try {
+      if (!apiKey) {
+        setError('API key ausente. Verifique configurações.');
         setIsProcessing(false);
+        return;
       }
+      
+      // Envia a imagem diretamente, sem Cloudflare
+      setText('Analisando imagem com Gemini...');
+      const aiSolution = await AIService.generateSolutionFromBase64(croppedImgBase64, apiKey);
+      setSolution(aiSolution);
+      setText('');
+    } catch (err) {
+      console.error('Erro no processamento:', err);
+      setError(`Erro: ${err.message || 'Falha ao processar imagem.'}`);
+      setSolution('');
+      setText('');
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   // Nova função para processar lote de capturas
