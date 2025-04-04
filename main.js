@@ -1,3 +1,4 @@
+// Arquivo: main.js
 const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
@@ -24,15 +25,15 @@ function createWindow() {
     width: 400,
     height: 300,
     frame: false,
-    transparent: false,
+    transparent: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false
     },
     icon: path.join(__dirname, 'assets/icon.png'),
-    skipTaskbar: true, 
-    alwaysOnTop: true  
+    skipTaskbar: true,
+    alwaysOnTop: true
   });
 
   if (process.argv.includes('--dev')) {
@@ -42,21 +43,23 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
   }
-  
+
+  // mainWindow.setHasShadow(false);
+
   registerShortcuts();
 }
 
 function registerShortcuts() {
   globalShortcut.unregisterAll();
-  
+
   const shortcuts = store.get('shortcuts') || DEFAULT_SHORTCUTS;
-  
+
   if (shortcuts.capture) {
     globalShortcut.register(shortcuts.capture, () => {
       captureScreen();
     });
   }
-  
+
   if (shortcuts.toggle) {
     globalShortcut.register(shortcuts.toggle, () => {
       mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
@@ -71,13 +74,13 @@ async function captureScreen() {
       mainWindow.hide();
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
+
     const img = await screenshot();
-    
+
     if (wasVisible) {
       mainWindow.show();
     }
-    
+
     mainWindow.webContents.send('screenshot-captured', img.toString('base64'));
   } catch (error) {
     console.error('Erro na captura:', error);
@@ -94,7 +97,7 @@ ipcMain.handle('capture-screen', () => {
 ipcMain.handle('get-api-key', () => {
   const encryptedKey = store.get('apiKey');
   if (!encryptedKey) return null;
-  
+
   try {
     return CryptoJS.AES.decrypt(encryptedKey, 'app-secretkey-changethis').toString(CryptoJS.enc.Utf8);
   } catch (error) {
