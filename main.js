@@ -1,4 +1,3 @@
-// Arquivo: main.js
 const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
@@ -22,8 +21,8 @@ let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 300,
+    width: 600,
+    height: 500,
     frame: false,
     transparent: true,
     webPreferences: {
@@ -39,19 +38,16 @@ function createWindow() {
   if (process.argv.includes('--dev')) {
     mainWindow.loadURL('http://localhost:5555');
     // mainWindow.webContents.openDevTools({ mode: 'detach' });
-
   } else {
     mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
   }
 
-  // mainWindow.setHasShadow(false);
-
+  mainWindow.setHasShadow(false);
   registerShortcuts();
 }
 
 function registerShortcuts() {
   globalShortcut.unregisterAll();
-
   const shortcuts = store.get('shortcuts') || DEFAULT_SHORTCUTS;
 
   if (shortcuts.capture) {
