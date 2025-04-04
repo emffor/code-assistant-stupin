@@ -150,6 +150,7 @@ body {
   height: 100%;
   box-sizing: border-box;
   background-color: rgba(45, 45, 45, 0.95);
+  overflow-y: auto;
 }
 
 .settings-modal h3 {

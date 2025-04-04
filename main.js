@@ -63,7 +63,19 @@ function registerShortcuts() {
       mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
     });
   }
+
+  // Opacity shortcuts remain the same
+  if (shortcuts.opacity30) {
+      globalShortcut.register(shortcuts.opacity30, () => mainWindow.setOpacity(0.3));
+  }
+  if (shortcuts.opacity60) {
+      globalShortcut.register(shortcuts.opacity60, () => mainWindow.setOpacity(0.6));
+  }
+  if (shortcuts.opacity100) {
+      globalShortcut.register(shortcuts.opacity100, () => mainWindow.setOpacity(1.0));
+  }
 }
+
 
 async function captureScreen() {
   try {
@@ -95,7 +107,6 @@ ipcMain.handle('capture-screen', () => {
 ipcMain.handle('get-api-key', () => {
   const encryptedKey = store.get('apiKey');
   if (!encryptedKey) return null;
-
   try {
     return CryptoJS.AES.decrypt(encryptedKey, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
   } catch (error) {
@@ -125,28 +136,52 @@ ipcMain.handle('save-shortcuts', (event, shortcuts) => {
   return true;
 });
 
-ipcMain.handle('get-cloudflare-hash', () => {
-  const encryptedHash = store.get('cloudflareHash');
-  if (!encryptedHash) return null;
-
+// Handlers for Cloudflare Account ID
+ipcMain.handle('get-cloudflare-account-id', () => {
+  const encryptedId = store.get('cloudflareAccountId');
+  if (!encryptedId) return null;
   try {
-    return CryptoJS.AES.decrypt(encryptedHash, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
+    return CryptoJS.AES.decrypt(encryptedId, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
   } catch (error) {
-    console.error('Erro ao descriptografar Cloudflare hash:', error);
+    console.error('Erro ao descriptografar Cloudflare Account ID:', error);
     return null;
   }
 });
 
-ipcMain.handle('save-cloudflare-hash', (event, cloudflareHash) => {
+ipcMain.handle('save-cloudflare-account-id', (event, accountId) => {
   try {
-    const encrypted = CryptoJS.AES.encrypt(cloudflareHash, ENCRYPTION_KEY).toString();
-    store.set('cloudflareHash', encrypted);
+    const encrypted = CryptoJS.AES.encrypt(accountId, ENCRYPTION_KEY).toString();
+    store.set('cloudflareAccountId', encrypted);
     return true;
   } catch (error) {
-    console.error('Erro ao salvar Cloudflare hash:', error);
+    console.error('Erro ao salvar Cloudflare Account ID:', error);
     return false;
   }
 });
+
+// Handlers for Cloudflare API Token
+ipcMain.handle('get-cloudflare-api-token', () => {
+  const encryptedToken = store.get('cloudflareApiToken');
+  if (!encryptedToken) return null;
+  try {
+    return CryptoJS.AES.decrypt(encryptedToken, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
+  } catch (error) {
+    console.error('Erro ao descriptografar Cloudflare API Token:', error);
+    return null;
+  }
+});
+
+ipcMain.handle('save-cloudflare-api-token', (event, apiToken) => {
+  try {
+    const encrypted = CryptoJS.AES.encrypt(apiToken, ENCRYPTION_KEY).toString();
+    store.set('cloudflareApiToken', encrypted);
+    return true;
+  } catch (error) {
+    console.error('Erro ao salvar Cloudflare API Token:', error);
+    return false;
+  }
+});
+
 
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
