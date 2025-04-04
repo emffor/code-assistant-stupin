@@ -1,21 +1,20 @@
-/* App.css Melhorado */
+/* App.css para interface igual à imagem */
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   overflow: hidden;
   background: transparent;
 }
 
 .app {
-  background-color: rgba(22, 22, 26, 0.92);
-  color: #fff;
+  background-color: rgba(220, 220, 220, 0.85);
+  color: #333;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   width: 100vw;
   height: 100vh;
   -webkit-app-region: drag;
-  transition: all 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
 }
@@ -24,135 +23,182 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background-color: rgba(16, 16, 20, 0.95);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px;
+  background-color: rgba(220, 220, 220, 0.9);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .header-title {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
-  letter-spacing: 0.5px;
-  opacity: 0.85;
+  color: #333;
 }
 
 .header-buttons {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  align-items: center;
 }
 
-.header button {
+.api-key-status {
+  font-size: 12px;
+  color: #888;
+}
+
+.settings-button {
   -webkit-app-region: no-drag;
-  background: none;
+  background-color: #8a70d6;
+  color: white;
   border: none;
-  color: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
   cursor: pointer;
-  font-size: 16px;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.header button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.header button:active {
-  transform: scale(0.92);
-}
-
-.header button:disabled {
-  color: rgba(255, 255, 255, 0.3);
-  cursor: not-allowed;
-}
-
-.preview {
-  padding: 12px;
-  text-align: center;
-  max-height: 180px;
-  overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.15);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.preview img {
-  max-width: 100%;
-  max-height: 160px;
-  object-fit: contain;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding: 16px;
+  gap: 10px;
+  background-color: rgba(180, 180, 180, 0.7);
+}
+
+.input-area {
+  width: 100%;
+}
+
+.input-area textarea {
+  width: 100%;
+  height: 60px;
+  border-radius: 8px;
+  border: none;
+  background-color: #333;
+  color: #ccc;
   padding: 12px;
-  overflow: hidden;
+  font-family: monospace;
+  resize: none;
+  font-size: 14px;
+}
+
+.generate-btn {
+  -webkit-app-region: no-drag;
+  background-color: #444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  text-align: center;
+  margin: 5px 0;
 }
 
 .solution-area {
   flex: 1;
-  padding: 16px;
-  margin-bottom: 12px;
-  background-color: rgba(40, 40, 48, 0.5);
+  background-color: #888;
   border-radius: 8px;
   overflow-y: auto;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.solution-area::-webkit-scrollbar {
-  width: 6px;
-}
-
-.solution-area::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
-}
-
-.solution-area::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
-
-.solution-area::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
 }
 
 .solution-content {
-  width: 100%;
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13px;
+  font-family: monospace;
+  font-size: 14px;
   line-height: 1.5;
   margin: 0;
-  color: rgba(255, 255, 255, 0.9);
+  padding: 12px;
+  color: white;
+}
+
+.keyboard-shortcuts {
+  background-color: #444;
+  color: #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  font-family: monospace;
+  margin-top: auto;
+}
+
+.keyboard-shortcuts p {
+  margin: 2px 0;
+}
+
+/* Estilos para configurações mantidos do original */
+.settings-modal {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  box-sizing: border-box;
+  background-color: rgba(220, 220, 220, 0.95);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 14px;
+  color: #333;
+}
+
+.input-group input {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: white;
+}
+
+.shortcut-info {
+  background-color: rgba(240, 240, 240, 0.7);
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.btn-primary {
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: none;
+  background-color: #8a70d6;
+  color: white;
+  cursor: pointer;
+  flex: 1;
+}
+
+.btn-secondary {
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  flex: 1;
 }
 
 .loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  color: rgba(255, 255, 255, 0.6);
-  font-style: italic;
   height: 100%;
   width: 100%;
 }
 
 .spinner {
   border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid rgba(255, 255, 255, 0.8);
+  border-top: 3px solid white;
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -163,298 +209,4 @@ body {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-
-.control-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.capture-btn {
-  -webkit-app-region: no-drag;
-  flex: 1;
-  padding: 10px 15px;
-  background-color: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.capture-btn:hover {
-  background-color: #1d4ed8;
-}
-
-.capture-btn:active {
-  transform: scale(0.98);
-}
-
-.capture-btn:disabled {
-  background-color: #475569;
-  cursor: not-allowed;
-}
-
-.opacity-controls {
-  display: flex;
-  gap: 5px;
-}
-
-.opacity-btn {
-  -webkit-app-region: no-drag;
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.opacity-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.opacity-btn.active {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-.error-message {
-  background-color: rgba(220, 38, 38, 0.2);
-  color: #fecaca;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Estilos para configurações */
-.settings-modal {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  height: 100%;
-  box-sizing: border-box;
-  background-color: rgba(22, 22, 26, 0.95);
-}
-
-.settings-modal h3 {
-  margin-top: 0;
-  margin-bottom: 16px;
-  font-size: 18px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 12px;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.input-group label {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.settings-modal input {
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(30, 30, 36, 0.7);
-  color: white;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.settings-modal input:focus {
-  outline: none;
-  border-color: rgba(59, 130, 246, 0.6);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.shortcut-info {
-  background-color: rgba(40, 40, 48, 0.5);
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.shortcut-info p {
-  margin-top: 0;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 10px;
-}
-
-.shortcut-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-
-.shortcut-item span:first-child {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.shortcut-item span:last-child {
-  color: rgba(255, 255, 255, 0.9);
-  font-family: 'JetBrains Mono', monospace;
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.configure-shortcuts-btn {
-  width: 100%;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-top: 8px;
-  transition: all 0.2s;
-  font-size: 14px;
-}
-
-.configure-shortcuts-btn:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-.button-group {
-  display: flex;
-  gap: 10px;
-  margin-top: auto;
-}
-
-.btn-primary {
-  -webkit-app-region: no-drag;
-  padding: 10px 15px;
-  border-radius: 6px;
-  border: none;
-  background-color: #2563eb;
-  color: white;
-  cursor: pointer;
-  flex: 1;
-  transition: all 0.2s;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.btn-primary:hover {
-  background-color: #1d4ed8;
-}
-
-.btn-secondary {
-  -webkit-app-region: no-drag;
-  padding: 10px 15px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(255, 255, 255, 0.05);
-  color: white;
-  cursor: pointer;
-  flex: 1;
-  transition: all 0.2s;
-  font-size: 14px;
-}
-
-.btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Estilos para configuração de atalhos */
-.shortcut-settings {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  height: 100%;
-  box-sizing: border-box;
-  background-color: rgba(22, 22, 26, 0.95);
-}
-
-.shortcut-error {
-  color: #fca5a5;
-  background-color: rgba(220, 38, 38, 0.2);
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 13px;
-}
-
-.shortcut-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.shortcut-item-config {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.shortcut-item-config button {
-  padding: 8px 12px;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  min-width: 130px;
-  text-align: center;
-  transition: all 0.2s;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-}
-
-.shortcut-item-config button:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-.shortcut-item-config button.recording {
-  background-color: #2563eb;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.7; }
-  50% { opacity: 1; }
-  100% { opacity: 0.7; }
-}
-
-/* Estilo para modo anti-detecção */
-.anti-detection-mode {
-  background-color: rgba(30, 30, 30, 0.01) !important;
-  backdrop-filter: blur(5px);
-  border-color: transparent !important;
-  color: rgba(255, 255, 255, 0.01) !important;
-}
-
-.anti-detection-mode button, 
-.anti-detection-mode input,
-.anti-detection-mode pre {
-  color: rgba(255, 255, 255, 0.01) !important;
 }

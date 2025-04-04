@@ -15,14 +15,12 @@ function App() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [opacity, setOpacity] = useState(1);
   const [error, setError] = useState('');
-  const [antiDetectionMode, setAntiDetectionMode] = useState(true); // Inicia em modo camuflado
+  const [antiDetectionMode, setAntiDetectionMode] = useState(true);
   const [shortcuts, setShortcuts] = useState({});
 
   useEffect(() => {
-    // Carrega configurações
     loadSettings();
     
-    // Listeners para eventos
     window.electronAPI.onScreenshotCaptured((imgData) => {
       setScreenshot(`data:image/png;base64,${imgData}`);
       processImage(imgData);
@@ -33,10 +31,7 @@ function App() {
       setTimeout(() => setError(''), 3000);
     });
 
-    // Atalhos de teclado
     document.addEventListener('keydown', handleKeyPress);
-    
-    // Ativa modo camuflado por padrão
     toggleAntiDetectionMode(true);
     
     return () => {
@@ -46,11 +41,9 @@ function App() {
 
   const loadSettings = async () => {
     try {
-      // Carrega API key
       const key = await window.electronAPI.getApiKey();
       if (key) setApiKey(key);
       
-      // Carrega atalhos
       const savedShortcuts = await window.electronAPI.getShortcuts();
       setShortcuts(savedShortcuts || {});
     } catch (error) {
@@ -59,7 +52,6 @@ function App() {
   };
 
   const handleKeyPress = (e) => {
-    // Implementa os atalhos de teclado personalizados
     if (e.altKey && e.key === '1') {
       setOpacity(0.3);
     } else if (e.altKey && e.key === '2') {
@@ -74,11 +66,9 @@ function App() {
     setSolution('');
     
     try {
-      // Extrai texto da imagem
       const extractedText = await OCRService.extractText(imgData);
       setText(extractedText);
       
-      // Gera solução via API
       if (apiKey && extractedText) {
         const aiSolution = await AIService.generateSolution(extractedText, apiKey);
         setSolution(aiSolution);
@@ -104,25 +94,9 @@ function App() {
     window.electronAPI.captureScreen();
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(solution);
-    
-    // Feedback visual temporário
-    const btn = document.getElementById('copy-btn');
-    if (btn) {
-      const originalText = btn.innerText;
-      btn.innerText = '✓';
-      setTimeout(() => {
-        btn.innerText = originalText;
-      }, 1000);
-    }
-  };
-
   const toggleAntiDetectionMode = (forceActivate = null) => {
     const newMode = forceActivate !== null ? forceActivate : !antiDetectionMode;
     setAntiDetectionMode(newMode);
-    
-    // Camufla o app
     AntiDetection.activateCamouflage(newMode);
   };
 
@@ -188,46 +162,35 @@ function App() {
       ) : (
         <div className="main-interface">
           <div className="header">
-            <span className="header-title">Assistente Discreto</span>
+            <span className="header-title">Stupid Button Club</span>
             <div className="header-buttons">
+              <span className="api-key-status">No API Key</span>
               <button 
-                id="copy-btn"
-                onClick={copyToClipboard} 
-                disabled={!solution}
-                title="Copiar solução"
-              >
-                📋
-              </button>
-              <button 
-                onClick={() => toggleAntiDetectionMode()}
-                title={antiDetectionMode ? "Desativar modo camuflado" : "Ativar modo camuflado"}
-                style={{color: antiDetectionMode ? '#10b981' : '#ff3333'}}
-              >
-                {antiDetectionMode ? '●' : '⊗'}
-              </button>
-              <button 
+                className="settings-button"
                 onClick={() => setShowSettings(true)}
-                title="Configurações"
               >
-                ⚙️
+                Settings
               </button>
             </div>
           </div>
           
-          {error && (
-            <div className="error-message">
-              <span>⚠️</span>
-              <span>{error}</span>
-            </div>
-          )}
-          
-          {screenshot && (
-            <div className="preview">
-              <img src={screenshot} alt="Captura" />
-            </div>
-          )}
-          
           <div className="main-content">
+            <div className="input-area">
+              <textarea 
+                placeholder="Describe the problem or press Alt+S to capture a screenshot"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+            </div>
+            
+            <button 
+              className="generate-btn" 
+              onClick={captureManually}
+              disabled={isProcessing}
+            >
+              Generate Analysis
+            </button>
+            
             <div className="solution-area">
               {isProcessing ? (
                 <div className="loading">
@@ -239,39 +202,12 @@ function App() {
               )}
             </div>
             
-            <div className="control-bar">
-              <button 
-                className="capture-btn" 
-                onClick={captureManually}
-                disabled={isProcessing}
-              >
-                <span>📷</span>
-                <span>Capturar ({shortcuts.capture || 'Alt+S'})</span>
-              </button>
-              
-              <div className="opacity-controls">
-                <button 
-                  className={`opacity-btn ${opacity === 0.3 ? 'active' : ''}`}
-                  onClick={() => setOpacity(0.3)}
-                  title="Opacidade 30%"
-                >
-                  1
-                </button>
-                <button 
-                  className={`opacity-btn ${opacity === 0.6 ? 'active' : ''}`}
-                  onClick={() => setOpacity(0.6)}
-                  title="Opacidade 60%"
-                >
-                  2
-                </button>
-                <button 
-                  className={`opacity-btn ${opacity === 1 ? 'active' : ''}`}
-                  onClick={() => setOpacity(1)}
-                  title="Opacidade 100%"
-                >
-                  3
-                </button>
-              </div>
+            <div className="keyboard-shortcuts">
+              <p>Keyboard Shortcuts:</p>
+              <p>[Alt + M]: Move window</p>
+              <p>[Alt + S]: Capture screen, [Alt + Enter]: Analyze, [Alt + Reset], [Alt]: Toggle</p>
+              <p>[Alt + 1,2,3]: Adjust window opacity</p>
+              <p>© Stupid Button Club</p>
             </div>
           </div>
         </div>
