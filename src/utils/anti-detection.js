@@ -109,13 +109,10 @@ const AntiDetection = {
       if (!element) return;
       
       if (activated) {
-        // Técnicas CSS para evitar captura por gravadores de tela
-        element.style.background = 'rgba(30, 30, 30, 0.01)';
-        element.style.backdropFilter = 'blur(5px)';
-        element.style.boxShadow = 'none';
-        element.style.borderColor = 'transparent';
-        element.style.color = 'rgba(255, 255, 255, 0.01)';
-        element.style.textShadow = '0 0 5px rgba(255, 255, 255, 0.8)';
+        // Técnicas CSS para evitar captura por gravadores mas mantém visível para o usuário
+        element.style.background = 'rgba(30, 30, 30, 0.85)'; // Mais visível para o usuário
+        element.style.backdropFilter = 'blur(2px)'; // Menos blur para melhor visibilidade
+        element.style.color = 'rgba(255, 255, 255, 0.7)'; // Texto visível para o usuário
         
         // Adiciona classe para estilização adicional
         element.classList.add('anti-detection-mode');
@@ -123,10 +120,7 @@ const AntiDetection = {
         // Restaura estilos originais
         element.style.background = '';
         element.style.backdropFilter = '';
-        element.style.boxShadow = '';
-        element.style.borderColor = '';
         element.style.color = '';
-        element.style.textShadow = '';
         
         // Remove classe de estilização
         element.classList.remove('anti-detection-mode');

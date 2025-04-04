@@ -15,7 +15,7 @@ function App() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [opacity, setOpacity] = useState(1);
   const [error, setError] = useState('');
-  const [antiDetectionMode, setAntiDetectionMode] = useState(false);
+  const [antiDetectionMode, setAntiDetectionMode] = useState(true); // Inicia em modo camuflado
   const [shortcuts, setShortcuts] = useState({});
 
   useEffect(() => {
@@ -35,6 +35,9 @@ function App() {
 
     // Atalhos de teclado
     document.addEventListener('keydown', handleKeyPress);
+    
+    // Ativa modo camuflado por padrão
+    toggleAntiDetectionMode(true);
     
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
@@ -115,15 +118,11 @@ function App() {
     }
   };
 
-  const toggleAntiDetectionMode = () => {
-    const newMode = !antiDetectionMode;
+  const toggleAntiDetectionMode = (forceActivate = null) => {
+    const newMode = forceActivate !== null ? forceActivate : !antiDetectionMode;
     setAntiDetectionMode(newMode);
     
-    // Aplica técnicas anti-detecção ao elemento principal
-    const appElement = document.querySelector('.app');
-    AntiDetection.activateInvisibleMode(newMode, appElement);
-    
-    // Camufla o app se estiver no modo anti-detecção
+    // Camufla o app
     AntiDetection.activateCamouflage(newMode);
   };
 
@@ -200,11 +199,11 @@ function App() {
                 📋
               </button>
               <button 
-                onClick={toggleAntiDetectionMode}
+                onClick={() => toggleAntiDetectionMode()}
                 title={antiDetectionMode ? "Desativar modo camuflado" : "Ativar modo camuflado"}
-                style={{color: antiDetectionMode ? '#10b981' : 'rgba(255, 255, 255, 0.7)'}}
+                style={{color: antiDetectionMode ? '#10b981' : '#ff3333'}}
               >
-                👁️
+                {antiDetectionMode ? '●' : '⊗'}
               </button>
               <button 
                 onClick={() => setShowSettings(true)}
