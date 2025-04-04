@@ -6,7 +6,9 @@ function ShortcutSettings({ onClose, shortcuts, setShortcuts }) {
     toggle: '',
     opacity30: '',
     opacity60: '',
-    opacity100: ''
+    opacity100: '',
+    batchCapture: '',  // Novo
+    batchSend: ''      // Novo
   });
   
   const [currentlyRecording, setCurrentlyRecording] = useState(null);
@@ -99,6 +101,27 @@ function ShortcutSettings({ onClose, shortcuts, setShortcuts }) {
             className={currentlyRecording === 'toggle' ? 'recording' : ''}
           >
             {getKeyboardIcon('toggle')} {currentlyRecording === 'toggle' ? 'Pressione teclas...' : localShortcuts.toggle || 'Definir'}
+          </button>
+        </div>
+        
+        {/* Novos atalhos para captura em lote */}
+        <div className="shortcut-item-config">
+          <span>Capturar para lote:</span>
+          <button 
+            onClick={() => startRecording('batchCapture')}
+            className={currentlyRecording === 'batchCapture' ? 'recording' : ''}
+          >
+            {getKeyboardIcon('batchCapture')} {currentlyRecording === 'batchCapture' ? 'Pressione teclas...' : localShortcuts.batchCapture || 'Definir'}
+          </button>
+        </div>
+        
+        <div className="shortcut-item-config">
+          <span>Enviar lote:</span>
+          <button 
+            onClick={() => startRecording('batchSend')}
+            className={currentlyRecording === 'batchSend' ? 'recording' : ''}
+          >
+            {getKeyboardIcon('batchSend')} {currentlyRecording === 'batchSend' ? 'Pressione teclas...' : localShortcuts.batchSend || 'Definir'}
           </button>
         </div>
         

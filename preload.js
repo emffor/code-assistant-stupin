@@ -15,5 +15,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveCloudflareAccountId: (id) => ipcRenderer.invoke('save-cloudflare-account-id', id),
   getCloudflareAccountId: () => ipcRenderer.invoke('get-cloudflare-account-id'),
   saveCloudflareApiToken: (token) => ipcRenderer.invoke('save-cloudflare-api-token', token),
-  getCloudflareApiToken: () => ipcRenderer.invoke('get-cloudflare-api-token')
+  getCloudflareApiToken: () => ipcRenderer.invoke('get-cloudflare-api-token'),
+  
+  // Novas funções para o sistema de captura em lote
+  onBatchScreenshotAdded: (callback) =>
+    ipcRenderer.on('batch-screenshot-added', (event, data) => callback(data)),
+  onBatchScreenshots: (callback) =>
+    ipcRenderer.on('batch-screenshots', (event, data) => callback(data)),
+  onBatchEmpty: (callback) =>
+    ipcRenderer.on('batch-empty', (event) => callback()),
+  clearBatch: () => ipcRenderer.invoke('clear-batch'),
+  getBatchCount: () => ipcRenderer.invoke('get-batch-count')
 });
