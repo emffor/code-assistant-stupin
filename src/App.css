@@ -6,11 +6,11 @@ body {
 }
 
 .app {
-  background-color: rgba(220, 220, 220, 0.85);
-  color: #333;
+  background-color: rgba(30, 30, 30, 0.9);
+  color: #e0e0e0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   width: 100vw;
   height: 100vh;
   -webkit-app-region: drag;
@@ -23,14 +23,14 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background-color: rgba(220, 220, 220, 0.9);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: rgba(20, 20, 20, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header-title {
   font-size: 18px;
   font-weight: 500;
-  color: #333;
+  color: #e0e0e0;
 }
 
 .header-buttons {
@@ -41,12 +41,12 @@ body {
 
 .api-key-status {
   font-size: 12px;
-  color: #888;
+  color: #aaa;
 }
 
 .settings-button {
   -webkit-app-region: no-drag;
-  background-color: #8a70d6;
+  background-color: #5a4e8c;
   color: white;
   border: none;
   border-radius: 6px;
@@ -55,13 +55,17 @@ body {
   cursor: pointer;
 }
 
+.settings-button:hover {
+  background-color: #7062b3;
+}
+
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   padding: 16px;
   gap: 10px;
-  background-color: rgba(180, 180, 180, 0.7);
+  background-color: rgba(40, 40, 40, 0.8);
 }
 
 .input-area {
@@ -72,9 +76,9 @@ body {
   width: 100%;
   height: 60px;
   border-radius: 8px;
-  border: none;
-  background-color: #333;
-  color: #ccc;
+  border: 1px solid #555;
+  background-color: #252526;
+  color: #d4d4d4;
   padding: 12px;
   font-family: monospace;
   resize: none;
@@ -84,7 +88,7 @@ body {
 
 .generate-btn {
   -webkit-app-region: no-drag;
-  background-color: #444;
+  background-color: #555;
   color: white;
   border: none;
   border-radius: 8px;
@@ -95,11 +99,21 @@ body {
   margin: 5px 0;
 }
 
+.generate-btn:hover {
+  background-color: #666;
+}
+
+.generate-btn:disabled {
+  background-color: #444;
+  cursor: not-allowed;
+}
+
 .solution-area {
   flex: 1;
-  background-color: #888;
+  background-color: #1e1e1e;
   border-radius: 8px;
   overflow-y: auto;
+  border: 1px solid #555;
 }
 
 .solution-content {
@@ -110,17 +124,18 @@ body {
   line-height: 1.5;
   margin: 0;
   padding: 12px;
-  color: white;
+  color: #d4d4d4;
 }
 
 .keyboard-shortcuts {
-  background-color: #444;
+  background-color: #2a2a2a;
   color: #ccc;
   border-radius: 8px;
   padding: 10px;
   font-size: 12px;
   font-family: monospace;
   margin-top: auto;
+  border: 1px solid #555;
 }
 
 .keyboard-shortcuts p {
@@ -134,7 +149,13 @@ body {
   gap: 20px;
   height: 100%;
   box-sizing: border-box;
-  background-color: rgba(220, 220, 220, 0.95);
+  background-color: rgba(45, 45, 45, 0.95);
+}
+
+.settings-modal h3 {
+   color: #e0e0e0;
+   border-bottom: 1px solid #555;
+   padding-bottom: 10px;
 }
 
 .input-group {
@@ -145,21 +166,44 @@ body {
 
 .input-group label {
   font-size: 14px;
-  color: #333;
+  color: #ccc;
 }
 
 .input-group input {
   padding: 10px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background-color: white;
+  border: 1px solid #666;
+  background-color: #333;
+  color: #e0e0e0;
   -webkit-app-region: no-drag;
 }
 
+.input-group small {
+    font-size: 12px;
+    color: #888;
+}
+
 .shortcut-info {
-  background-color: rgba(240, 240, 240, 0.7);
+  background-color: rgba(55, 55, 55, 0.8);
   padding: 16px;
   border-radius: 8px;
+  color: #ccc;
+}
+
+.shortcut-info p {
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.shortcut-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.shortcut-item span:first-child {
+    color: #aaa;
 }
 
 .button-group {
@@ -172,22 +216,30 @@ body {
   padding: 10px 15px;
   border-radius: 6px;
   border: none;
-  background-color: #8a70d6;
+  background-color: #5a4e8c;
   color: white;
   cursor: pointer;
   flex: 1;
   -webkit-app-region: no-drag;
 }
 
+.btn-primary:hover {
+  background-color: #7062b3;
+}
+
 .btn-secondary {
   padding: 10px 15px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background-color: white;
-  color: #333;
+  border: 1px solid #666;
+  background-color: #444;
+  color: #ccc;
   cursor: pointer;
   flex: 1;
   -webkit-app-region: no-drag;
+}
+
+.btn-secondary:hover {
+    background-color: #555;
 }
 
 .loading {
@@ -196,11 +248,12 @@ body {
   align-items: center;
   height: 100%;
   width: 100%;
+  color: #ccc;
 }
 
 .spinner {
   border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid white;
+  border-top: 3px solid #ccc;
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -218,54 +271,20 @@ body {
   -webkit-app-region: no-drag;
   margin-top: 10px;
   padding: 8px 12px;
-  background-color: #eee;
-  border: 1px solid #ccc;
+  background-color: #555;
+  border: 1px solid #777;
   border-radius: 4px;
-  color: #333;
+  color: #ccc;
   text-align: center;
+  display: block;
+  width: calc(100% - 24px);
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .configure-shortcuts-btn:hover {
-  background-color: #ddd;
-}
-
-.shortcut-item-config {
- display: flex;
- justify-content: space-between;
- align-items: center;
- margin-bottom: 10px;
-}
-
-.shortcut-item-config span {
- flex-grow: 1;
- margin-right: 10px;
-}
-
-.shortcut-item-config button {
- -webkit-app-region: no-drag;
- padding: 6px 12px;
- border-radius: 4px;
- border: 1px solid #ccc;
- background-color: white;
- cursor: pointer;
- min-width: 120px;
- text-align: center;
-}
-
-.shortcut-item-config button.recording {
- background-color: #d1e7ff;
- border-color: #0d6efd;
- animation: pulse 1.5s infinite;
-}
-
-.shortcut-error {
-  color: #dc3545;
-  background-color: #f8d7da;
-  border: 1px solid #f5c2c7;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  text-align: center;
+  background-color: #666;
 }
 
 .shortcut-settings {
@@ -275,19 +294,145 @@ body {
   gap: 20px;
   height: 100%;
   box-sizing: border-box;
-  background-color: rgba(220, 220, 220, 0.95);
+  background-color: rgba(45, 45, 45, 0.95);
+  color: #ccc;
 }
 .shortcut-settings h3 {
   margin-top: 0;
-  color: #333;
-  border-bottom: 1px solid #ccc;
+  color: #e0e0e0;
+  border-bottom: 1px solid #555;
   padding-bottom: 10px;
+}
+
+.shortcut-list {
+  flex-grow: 1;
+}
+
+.shortcut-item-config {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ margin-bottom: 10px;
+ padding: 8px 0;
+ border-bottom: 1px solid #444;
+}
+
+.shortcut-item-config span {
+ flex-grow: 1;
+ margin-right: 10px;
+ color: #bbb;
+}
+
+.shortcut-item-config button {
+ -webkit-app-region: no-drag;
+ padding: 6px 12px;
+ border-radius: 4px;
+ border: 1px solid #666;
+ background-color: #333;
+ color: #ccc;
+ cursor: pointer;
+ min-width: 120px;
+ text-align: center;
+}
+
+.shortcut-item-config button.recording {
+ background-color: #4a5a7a;
+ border-color: #6988cc;
+ animation: pulse 1.5s infinite;
+ color: #fff;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(105, 136, 204, 0.7); }
+  70% { box-shadow: 0 0 0 5px rgba(105, 136, 204, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(105, 136, 204, 0); }
+}
+
+
+.shortcut-error {
+  color: #ff8f8f;
+  background-color: #5c3035;
+  border: 1px solid #a04e56;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
 }
 
 .shortcut-settings .button-group {
   margin-top: auto;
 }
 
-.shortcut-list {
-  flex-grow: 1;
+.toggle-switch-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+  -webkit-app-region: no-drag;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+  background-color: #555;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.toggle-switch.active {
+  background-color: #4CAF50;
+}
+
+.toggle-switch.inactive {
+  background-color: #f44336;
+}
+
+.toggle-handle {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease-in-out;
+}
+
+.toggle-switch.active .toggle-handle {
+  transform: translateX(20px);
+}
+
+.toggle-switch.inactive .toggle-handle {
+  transform: translateX(0);
+}
+
+.toggle-switch-container span {
+  font-size: 13px;
+  color: #ccc;
+}
+
+.api-key-status.valid {
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+.api-key-status.invalid {
+  color: #f44336;
+}
+
+.error-message {
+  color: #ff8f8f;
+  background-color: #5c3035;
+  border: 1px solid #a04e56;
+  padding: 8px;
+  border-radius: 4px;
+  margin: 10px;
+  text-align: center;
+  font-size: 13px;
 }
