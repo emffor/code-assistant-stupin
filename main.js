@@ -49,131 +49,41 @@ function createWindow() {
 
 function registerShortcuts() {
   globalShortcut.unregisterAll();
-
+  
   const shortcuts = store.get('shortcuts') || DEFAULT_SHORTCUTS;
-  console.log('[DEBUG] Registrando atalhos lidos:', JSON.stringify(shortcuts));
-
-  const testShortcut = 'Ctrl+Shift+F11';
-  console.log(`[DEBUG] Tentando registrar atalho de teste: ${testShortcut}`);
-  const registeredTest = globalShortcut.register(testShortcut, () => {
-    console.log(`[DEBUG] Atalho de TESTE ${testShortcut} pressionado!`);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      const currentOpacity = mainWindow.getOpacity();
-      const newOpacity = currentOpacity < 0.7 ? 0.8 : 0.4;
-      console.log(`[DEBUG] Opacidade atual: ${currentOpacity}, Definindo opacidade de TESTE para ${newOpacity}`);
-      try {
-        mainWindow.setOpacity(newOpacity);
-        console.log(`[DEBUG] Opacidade de TESTE definida com sucesso.`);
-      } catch (err) {
-        console.error(`[DEBUG] Erro ao definir opacidade de TESTE: ${err}`);
-      }
-    } else {
-      console.error('[DEBUG] TESTE: mainWindow não definida ou destruída ao tentar setar opacidade.');
-    }
-  });
-  if (!registeredTest) {
-    console.error(`[DEBUG] Falha ao registrar atalho de TESTE: ${testShortcut}. Verifique conflitos.`);
-  } else {
-    console.log(`[DEBUG] Atalho de TESTE ${testShortcut} registrado com sucesso.`);
-  }
-
-
+  console.log('[DEBUG] Registrando atalhos:', JSON.stringify(shortcuts));
+  
   if (shortcuts.capture) {
     const registeredCapture = globalShortcut.register(shortcuts.capture, () => {
       console.log(`[CALLBACK] Atalho ${shortcuts.capture} pressionado.`);
       captureScreen();
     });
-     if (!registeredCapture) {
-        console.error(`Falha ao registrar atalho: ${shortcuts.capture}`);
-     } else {
-        console.log(`Atalho ${shortcuts.capture} registrado com sucesso.`);
-     }
+    if (!registeredCapture) {
+      console.error(`Falha ao registrar atalho: ${shortcuts.capture}`);
+    } else {
+      console.log(`Atalho ${shortcuts.capture} registrado com sucesso.`);
+    }
   }
-
+  
   if (shortcuts.toggle) {
     const registeredToggle = globalShortcut.register(shortcuts.toggle, () => {
-        console.log(`[CALLBACK] Atalho ${shortcuts.toggle} pressionado.`);
-        if (mainWindow && !mainWindow.isDestroyed()) {
-           console.log('[CALLBACK] Alternando visibilidade.')
-           mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
-        } else {
-           console.error('[CALLBACK] mainWindow não definida ou destruída ao tentar alternar visibilidade.');
-        }
-      });
-       if (!registeredToggle) {
-          console.error(`Falha ao registrar atalho: ${shortcuts.toggle}`);
-       } else {
-          console.log(`Atalho ${shortcuts.toggle} registrado com sucesso.`);
-       }
-  }
-
-  if (shortcuts.opacity30) {
-    const registeredOp30 = globalShortcut.register(shortcuts.opacity30, () => {
-      console.log(`[CALLBACK] Atalho ${shortcuts.opacity30} pressionado.`);
+      console.log(`[CALLBACK] Atalho ${shortcuts.toggle} pressionado.`);
       if (mainWindow && !mainWindow.isDestroyed()) {
-        console.log(`[CALLBACK] Setando opacidade para 0.3`);
-        try {
-            mainWindow.setOpacity(0.3);
-            console.log(`[CALLBACK] Opacidade 0.3 definida com sucesso.`);
-        } catch (err) {
-             console.error(`[CALLBACK] Erro ao definir opacidade 0.3: ${err}`);
-        }
+        console.log('[CALLBACK] Alternando visibilidade.');
+        mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
       } else {
-        console.error('[CALLBACK] mainWindow não definida ou destruída ao tentar setar opacidade 0.3.');
+        console.error('[CALLBACK] mainWindow não definida ou destruída ao tentar alternar visibilidade.');
       }
     });
-     if (!registeredOp30) {
-        console.error(`Falha ao registrar atalho: ${shortcuts.opacity30}`);
-     } else {
-        console.log(`Atalho ${shortcuts.opacity30} registrado com sucesso.`);
-     }
+    if (!registeredToggle) {
+      console.error(`Falha ao registrar atalho: ${shortcuts.toggle}`);
+    } else {
+      console.log(`Atalho ${shortcuts.toggle} registrado com sucesso.`);
+    }
   }
-
-  if (shortcuts.opacity60) {
-    const registeredOp60 = globalShortcut.register(shortcuts.opacity60, () => {
-      console.log(`[CALLBACK] Atalho ${shortcuts.opacity60} pressionado.`);
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        console.log(`[CALLBACK] Setando opacidade para 0.6`);
-         try {
-            mainWindow.setOpacity(0.6);
-            console.log(`[CALLBACK] Opacidade 0.6 definida com sucesso.`);
-        } catch (err) {
-             console.error(`[CALLBACK] Erro ao definir opacidade 0.6: ${err}`);
-        }
-      } else {
-         console.error('[CALLBACK] mainWindow não definida ou destruída ao tentar setar opacidade 0.6.');
-      }
-    });
-     if (!registeredOp60) {
-        console.error(`Falha ao registrar atalho: ${shortcuts.opacity60}`);
-     } else {
-        console.log(`Atalho ${shortcuts.opacity60} registrado com sucesso.`);
-     }
-  }
-
-  if (shortcuts.opacity100) {
-    const registeredOp100 = globalShortcut.register(shortcuts.opacity100, () => {
-      console.log(`[CALLBACK] Atalho ${shortcuts.opacity100} pressionado.`);
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        console.log(`[CALLBACK] Setando opacidade para 1.0`);
-         try {
-            mainWindow.setOpacity(1.0);
-            console.log(`[CALLBACK] Opacidade 1.0 definida com sucesso.`);
-        } catch (err) {
-             console.error(`[CALLBACK] Erro ao definir opacidade 1.0: ${err}`);
-        }
-      } else {
-         console.error('[CALLBACK] mainWindow não definida ou destruída ao tentar setar opacidade 1.0.');
-      }
-    });
-     if (!registeredOp100) {
-        console.error(`Falha ao registrar atalho: ${shortcuts.opacity100}`);
-     } else {
-        console.log(`Atalho ${shortcuts.opacity100} registrado com sucesso.`);
-     }
-  }
+  
+  // Os atalhos de opacidade são tratados no React via event listener
 }
-
 
 async function captureScreen() {
   try {
@@ -202,7 +112,6 @@ async function captureScreen() {
        console.warn(`Falha ao capturar display ${display.id}, tentando primária:`, captureErr);
        imgBuffer = await screenshot();
     }
-
 
     if (wasVisible) {
       mainWindow.show();

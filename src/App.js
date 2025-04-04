@@ -14,6 +14,7 @@ function App() {
   const [cloudflareApiToken, setCloudflareApiToken] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [opacity, setOpacity] = useState(1); // Controle de opacidade via React
   const [error, setError] = useState('');
   const [antiDetectionMode, setAntiDetectionMode] = useState(true);
   const [shortcuts, setShortcuts] = useState({});
@@ -25,11 +26,34 @@ function App() {
     });
     window.electronAPI.onScreenshotError((message) => {
       setError(`Erro na captura: ${message}`);
-       setIsProcessing(false);
+      setIsProcessing(false);
       setTimeout(() => setError(''), 5000);
     });
+    
+    // Adiciona listener para atalhos de opacidade
+    document.addEventListener('keydown', handleKeyPress);
+    
     toggleAntiDetectionMode(true);
-  }, []);
+    
+    // Limpa listener ao desmontar
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [shortcuts]); // Atualiza quando shortcuts mudar
+
+  // Handler para atalhos de opacidade
+  const handleKeyPress = (e) => {
+    if (e.altKey) {
+      const key = e.key;
+      if (key === (shortcuts.opacity30 || 'Alt+1').slice(-1)) {
+        setOpacity(0.3);
+      } else if (key === (shortcuts.opacity60 || 'Alt+2').slice(-1)) {
+        setOpacity(0.6);
+      } else if (key === (shortcuts.opacity100 || 'Alt+3').slice(-1)) {
+        setOpacity(1);
+      }
+    }
+  };
 
   const loadSettings = async () => {
      try {
@@ -145,7 +169,7 @@ function App() {
   };
 
   return (
-     <div className="app">
+     <div className="app" style={{ opacity }}> {/* Aplica opacidade via style */}
        {showShortcuts ? (
          <ShortcutSettings
            onClose={() => setShowShortcuts(false)}
@@ -281,7 +305,7 @@ function App() {
              <div className="keyboard-shortcuts">
               <p>Atalhos:</p>
               <p>[{shortcuts.capture || 'Não def.'}]: Captura Área | [{shortcuts.toggle || 'Não def.'}]: Mostra/Oculta</p>
-              <p>[Alt+1][Alt+2][Alt+3]: Opacidade 30/60/100%</p>
+              <p>[{shortcuts.opacity30 || 'Alt+1'}][{shortcuts.opacity60 || 'Alt+2'}][{shortcuts.opacity100 || 'Alt+3'}]: Opacidade 30/60/100%</p>
               <p>© Stupid Button Club</p>
             </div>
            </div>
