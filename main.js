@@ -17,12 +17,14 @@ const DEFAULT_SHORTCUTS = {
   opacity100: 'Alt+3',
 };
 
+const ENCRYPTION_KEY = 'app-secretkey-changethis';
+
 let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 600,
-    height: 500,
+    height: 600,
     frame: false,
     transparent: true,
     webPreferences: {
@@ -95,7 +97,7 @@ ipcMain.handle('get-api-key', () => {
   if (!encryptedKey) return null;
 
   try {
-    return CryptoJS.AES.decrypt(encryptedKey, 'app-secretkey-changethis').toString(CryptoJS.enc.Utf8);
+    return CryptoJS.AES.decrypt(encryptedKey, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
   } catch (error) {
     console.error('Erro ao descriptografar API key:', error);
     return null;
@@ -104,7 +106,7 @@ ipcMain.handle('get-api-key', () => {
 
 ipcMain.handle('save-api-key', (event, apiKey) => {
   try {
-    const encrypted = CryptoJS.AES.encrypt(apiKey, 'app-secretkey-changethis').toString();
+    const encrypted = CryptoJS.AES.encrypt(apiKey, ENCRYPTION_KEY).toString();
     store.set('apiKey', encrypted);
     return true;
   } catch (error) {
@@ -121,6 +123,29 @@ ipcMain.handle('save-shortcuts', (event, shortcuts) => {
   store.set('shortcuts', shortcuts);
   registerShortcuts();
   return true;
+});
+
+ipcMain.handle('get-cloudflare-hash', () => {
+  const encryptedHash = store.get('cloudflareHash');
+  if (!encryptedHash) return null;
+
+  try {
+    return CryptoJS.AES.decrypt(encryptedHash, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
+  } catch (error) {
+    console.error('Erro ao descriptografar Cloudflare hash:', error);
+    return null;
+  }
+});
+
+ipcMain.handle('save-cloudflare-hash', (event, cloudflareHash) => {
+  try {
+    const encrypted = CryptoJS.AES.encrypt(cloudflareHash, ENCRYPTION_KEY).toString();
+    store.set('cloudflareHash', encrypted);
+    return true;
+  } catch (error) {
+    console.error('Erro ao salvar Cloudflare hash:', error);
+    return false;
+  }
 });
 
 const gotTheLock = app.requestSingleInstanceLock();

@@ -11,6 +11,7 @@ function App() {
   const [solution, setSolution] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [apiKey, setApiKey] = useState('');
+  const [cloudflareHash, setCloudflareHash] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [opacity, setOpacity] = useState(1);
@@ -20,7 +21,7 @@ function App() {
 
   useEffect(() => {
     loadSettings();
-    
+
     window.electronAPI.onScreenshotCaptured((imgData) => {
       setScreenshot(`data:image/png;base64,${imgData}`);
       processImage(imgData);
@@ -33,7 +34,7 @@ function App() {
 
     document.addEventListener('keydown', handleKeyPress);
     toggleAntiDetectionMode(true);
-    
+
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
@@ -43,7 +44,10 @@ function App() {
     try {
       const key = await window.electronAPI.getApiKey();
       if (key) setApiKey(key);
-      
+
+      const hash = await window.electronAPI.getCloudflareHash();
+      if (hash) setCloudflareHash(hash);
+
       const savedShortcuts = await window.electronAPI.getShortcuts();
       setShortcuts(savedShortcuts || {});
     } catch (error) {
@@ -64,11 +68,11 @@ function App() {
   const processImage = async (imgData) => {
     setIsProcessing(true);
     setSolution('');
-    
+
     try {
       const extractedText = await OCRService.extractText(imgData);
       setText(extractedText);
-      
+
       if (apiKey && extractedText) {
         const aiSolution = await AIService.generateSolution(extractedText, apiKey);
         setSolution(aiSolution);
@@ -87,6 +91,7 @@ function App() {
 
   const saveSettings = async () => {
     await window.electronAPI.saveApiKey(apiKey);
+    await window.electronAPI.saveCloudflareHash(cloudflareHash);
     setShowSettings(false);
   };
 
@@ -103,26 +108,39 @@ function App() {
   return (
     <div className="app" style={{ opacity }}>
       {showShortcuts ? (
-        <ShortcutSettings 
-          onClose={() => setShowShortcuts(false)} 
+        <ShortcutSettings
+          onClose={() => setShowShortcuts(false)}
           shortcuts={shortcuts}
           setShortcuts={setShortcuts}
         />
       ) : showSettings ? (
         <div className="settings-modal">
           <h3>Configurações</h3>
-          
+
           <div className="input-group">
             <label htmlFor="api-key">API Key Gemini</label>
-            <input 
+            <input
               id="api-key"
-              type="password" 
-              placeholder="Insira sua API Key" 
+              type="password"
+              placeholder="Insira sua API Key"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
             />
+             {/* <small>Sua chave API é armazenada localmente.</small> */}
           </div>
-          
+
+          <div className="input-group">
+            <label htmlFor="cf-hash">Cloudflare Account Hash</label>
+            <input
+              id="cf-hash"
+              type="text"
+              placeholder="Seu-account-hash"
+              value={cloudflareHash}
+              onChange={(e) => setCloudflareHash(e.target.value)}
+            />
+             <small>Seu hash de conta Cloudflare (opcional).</small>
+          </div>
+
           <div className="shortcut-info">
             <p>Atalhos Configurados</p>
             <div className="shortcut-item">
@@ -145,15 +163,15 @@ function App() {
               <span>Opacidade 100%:</span>
               <span>{shortcuts.opacity100 || 'Alt+3'}</span>
             </div>
-            
-            <button 
-              className="configure-shortcuts-btn" 
+
+            <button
+              className="configure-shortcuts-btn"
               onClick={() => setShowShortcuts(true)}
             >
               Configurar Atalhos
             </button>
           </div>
-          
+
           <div className="button-group">
             <button className="btn-primary" onClick={saveSettings}>Salvar</button>
             <button className="btn-secondary" onClick={() => setShowSettings(false)}>Cancelar</button>
@@ -165,7 +183,7 @@ function App() {
             <span className="header-title">Stupid Button Club</span>
             <div className="header-buttons">
               <span className="api-key-status">No API Key</span>
-              <button 
+              <button
                 className="settings-button"
                 onClick={() => setShowSettings(true)}
               >
@@ -173,24 +191,24 @@ function App() {
               </button>
             </div>
           </div>
-          
+
           <div className="main-content">
             <div className="input-area">
-              <textarea 
+              <textarea
                 placeholder="Describe the problem or press Alt+S to capture a screenshot"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
             </div>
-            
-            <button 
-              className="generate-btn" 
+
+            <button
+              className="generate-btn"
               onClick={captureManually}
               disabled={isProcessing}
             >
               Generate Analysis
             </button>
-            
+
             <div className="solution-area">
               {isProcessing ? (
                 <div className="loading">
@@ -201,7 +219,7 @@ function App() {
                 solution && <pre className="solution-content">{solution}</pre>
               )}
             </div>
-            
+
             <div className="keyboard-shortcuts">
               <p>Keyboard Shortcuts:</p>
               <p>[Alt + M]: Move window</p>
