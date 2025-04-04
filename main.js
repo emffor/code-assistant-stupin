@@ -1,13 +1,10 @@
 const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
 const path = require('path');
-const ElectronStore = require('electron-store');
+const Store = require('electron-store');
 const CryptoJS = require('crypto-js');
 
-// Configuração de armazenamento criptografado
-const store = new ElectronStore({
- encryptionKey: 'sua-chave-segura',
- name: 'config'
-});
+// Configuração básica sem opções para compatibilidade
+const store = new Store();
 
 let mainWindow;
 
@@ -23,26 +20,18 @@ function createWindow() {
      nodeIntegration: false
    },
    icon: path.join(__dirname, 'assets/icon.png'),
-   skipTaskbar: true // Oculta da barra de tarefas
+   skipTaskbar: true
  });
 
- // Carrega a interface React
  mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
- 
- // Modo de desenvolvimento
- // mainWindow.webContents.openDevTools();
- 
- // Registra atalho global para captura (Alt+S)
  registerShortcuts();
 }
 
 function registerShortcuts() {
- // Captura de tela
  globalShortcut.register('Alt+S', () => {
    captureScreen();
  });
  
- // Mostrar/ocultar aplicativo
  globalShortcut.register('Alt+H', () => {
    mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
  });
@@ -60,7 +49,6 @@ async function captureScreen() {
 
 app.whenReady().then(createWindow);
 
-// Comunicação IPC segura
 ipcMain.handle('get-api-key', () => {
  const encryptedKey = store.get('apiKey');
  if (!encryptedKey) return null;
@@ -73,7 +61,6 @@ ipcMain.handle('save-api-key', (event, apiKey) => {
  store.set('apiKey', encrypted);
 });
 
-// Limpa atalhos ao sair
 app.on('will-quit', () => {
  globalShortcut.unregisterAll();
 });
