@@ -25,6 +25,8 @@ function createWindow() {
 
  if (process.argv.includes('--dev')) {
   mainWindow.loadURL('http://localhost:5555');
+  // Abrir DevTools em desenvolvimento
+  // mainWindow.webContents.openDevTools({ mode: 'detach' });
 } else {
   mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
 }
@@ -53,6 +55,11 @@ async function captureScreen() {
 }
 
 app.whenReady().then(createWindow);
+
+// ipcMain.handle('capture-screen', async () => {
+//   await captureScreen();
+//   return true;
+// });
 
 ipcMain.handle('get-api-key', () => {
  const encryptedKey = store.get('apiKey');
