@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import OCRService from './services/OCRService';
 import AIService from './services/AIService';
+import ShortcutSettings from './components/ShortcutSettings';
 
 function App() {
   const [screenshot, setScreenshot] = useState(null);
@@ -10,6 +11,9 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [opacity, setOpacity] = useState(1); // Controle de opacidade
+  const [error, setError] = useState('');
 
   useEffect(() => {
     // Carrega a API key salva
@@ -22,7 +26,36 @@ function App() {
       setScreenshot(`data:image/png;base64,${imgData}`);
       processImage(imgData);
     });
+
+    // Listener para erros de captura
+    window.electronAPI.onScreenshotError((message) => {
+      setError(`Erro na captura: ${message}`);
+      setTimeout(() => setError(''), 3000);
+    });
+
+    // Atalhos de teclado para opacidade
+    document.addEventListener('keydown', handleKeyPress);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+      window.electronAPI.onScreenshotError(null);
+    };
   }, []);
+
+  const handleKeyPress = (e) => {
+    // Alt+1: Opacidade baixa (30%)
+    if (e.altKey && e.key === '1') {
+      setOpacity(0.3);
+    }
+    // Alt+2: Opacidade média (60%)
+    else if (e.altKey && e.key === '2') {
+      setOpacity(0.6);
+    }
+    // Alt+3: Opacidade total (100%)
+    else if (e.altKey && e.key === '3') {
+      setOpacity(1);
+    }
+  };
 
   const processImage = async (imgData) => {
     setIsProcessing(true);
@@ -38,6 +71,7 @@ function App() {
       }
     } catch (error) {
       console.error('Erro no processamento:', error);
+      setSolution('Erro ao processar imagem. Tente novamente.');
     } finally {
       setIsProcessing(false);
     }
@@ -52,44 +86,68 @@ function App() {
     window.electronAPI.captureScreen();
   };
 
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(solution);
+  };
+
   return (
-    <div className="app-container">
-      {showSettings ? (
-        <div className="settings-container">
-          <h2>Configurações</h2>
+    <div className="app" style={{ opacity }}>
+      {showShortcuts ? (
+        <ShortcutSettings onClose={() => setShowShortcuts(false)} />
+      ) : showSettings ? (
+        <div className="settings-modal">
+          <h3>Configurações</h3>
           <input 
             type="password" 
             placeholder="API Key Gemini" 
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
           />
-          <button onClick={saveSettings}>Salvar</button>
-          <button onClick={() => setShowSettings(false)}>Cancelar</button>
+          <div className="shortcut-info">
+            <p>Atalhos:</p>
+            <button 
+              className="configure-shortcuts-btn" 
+              onClick={() => setShowShortcuts(true)}
+            >
+              Configurar Atalhos
+            </button>
+          </div>
+          <div className="button-group">
+            <button onClick={saveSettings}>Salvar</button>
+            <button onClick={() => setShowSettings(false)}>Cancelar</button>
+          </div>
         </div>
       ) : (
-        <div className="main-container">
-          <header>
-            <h1>Assistente Discreto</h1>
-            <button onClick={() => setShowSettings(true)}>⚙️</button>
-          </header>
+        <div className="main-interface">
+          <div className="header">
+            <span>Assistente Discreto</span>
+            <div className="header-buttons">
+              <button onClick={copyToClipboard} disabled={!solution}>📋</button>
+              <button onClick={() => setShowSettings(true)}>⚙️</button>
+            </div>
+          </div>
           
           {screenshot && (
-            <div className="screenshot-preview">
-              <img src={screenshot} alt="Screenshot" />
+            <div className="preview">
+              <img src={screenshot} alt="Captura" />
             </div>
           )}
           
-          <div className="solution-container">
+          <div className="solution-area">
             {isProcessing ? (
-              <p>Processando...</p>
+              <div className="loading">Processando...</div>
             ) : (
-              solution && <div>{solution}</div>
+              solution && <pre className="solution-content">{solution}</pre>
             )}
           </div>
           
-          <div className="button-container">
-            <button onClick={captureManually}>Capturar (Alt+S)</button>
-          </div>
+          <button 
+            className="capture-btn" 
+            onClick={captureManually}
+            disabled={isProcessing}
+          >
+            Capturar (Alt+S)
+          </button>
         </div>
       )}
     </div>
