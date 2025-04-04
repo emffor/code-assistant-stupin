@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-function ShortcutSettings({ onClose }) {
-  const [shortcuts, setShortcuts] = useState({
+function ShortcutSettings({ onClose, shortcuts, setShortcuts }) {
+  const [localShortcuts, setLocalShortcuts] = useState({
     capture: '',
     toggle: '',
     opacity30: '',
@@ -13,12 +13,8 @@ function ShortcutSettings({ onClose }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Carrega atalhos atuais
-    window.electronAPI.getShortcuts().then(savedShortcuts => {
-      if (savedShortcuts) {
-        setShortcuts(savedShortcuts);
-      }
-    });
+    // Inicializa com os atalhos atuais
+    setLocalShortcuts(shortcuts);
 
     // Listener para teclas quando estiver gravando
     const handleKeyDown = (e) => {
@@ -45,7 +41,7 @@ function ShortcutSettings({ onClose }) {
         setError('');
         const shortcutStr = keys.join('+');
         
-        setShortcuts(prev => ({
+        setLocalShortcuts(prev => ({
           ...prev,
           [currentlyRecording]: shortcutStr
         }));
@@ -58,7 +54,7 @@ function ShortcutSettings({ onClose }) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentlyRecording]);
+  }, [currentlyRecording, shortcuts]);
 
   const startRecording = (key) => {
     setCurrentlyRecording(key);
@@ -67,11 +63,16 @@ function ShortcutSettings({ onClose }) {
 
   const saveSettings = async () => {
     try {
-      await window.electronAPI.saveShortcuts(shortcuts);
+      await window.electronAPI.saveShortcuts(localShortcuts);
+      setShortcuts(localShortcuts);
       onClose();
     } catch (err) {
       setError('Falha ao salvar atalhos');
     }
+  };
+
+  const getKeyboardIcon = (shortcutKey) => {
+    return currentlyRecording === shortcutKey ? '⌨️' : '';
   };
 
   return (
@@ -81,60 +82,60 @@ function ShortcutSettings({ onClose }) {
       {error && <div className="shortcut-error">{error}</div>}
       
       <div className="shortcut-list">
-        <div className="shortcut-item">
+        <div className="shortcut-item-config">
           <span>Capturar tela:</span>
           <button 
             onClick={() => startRecording('capture')}
             className={currentlyRecording === 'capture' ? 'recording' : ''}
           >
-            {currentlyRecording === 'capture' ? 'Pressione teclas...' : shortcuts.capture || 'Definir'}
+            {getKeyboardIcon('capture')} {currentlyRecording === 'capture' ? 'Pressione teclas...' : localShortcuts.capture || 'Definir'}
           </button>
         </div>
         
-        <div className="shortcut-item">
+        <div className="shortcut-item-config">
           <span>Mostrar/ocultar app:</span>
           <button 
             onClick={() => startRecording('toggle')}
             className={currentlyRecording === 'toggle' ? 'recording' : ''}
           >
-            {currentlyRecording === 'toggle' ? 'Pressione teclas...' : shortcuts.toggle || 'Definir'}
+            {getKeyboardIcon('toggle')} {currentlyRecording === 'toggle' ? 'Pressione teclas...' : localShortcuts.toggle || 'Definir'}
           </button>
         </div>
         
-        <div className="shortcut-item">
+        <div className="shortcut-item-config">
           <span>Opacidade 30%:</span>
           <button 
             onClick={() => startRecording('opacity30')}
             className={currentlyRecording === 'opacity30' ? 'recording' : ''}
           >
-            {currentlyRecording === 'opacity30' ? 'Pressione teclas...' : shortcuts.opacity30 || 'Definir'}
+            {getKeyboardIcon('opacity30')} {currentlyRecording === 'opacity30' ? 'Pressione teclas...' : localShortcuts.opacity30 || 'Definir'}
           </button>
         </div>
         
-        <div className="shortcut-item">
+        <div className="shortcut-item-config">
           <span>Opacidade 60%:</span>
           <button 
             onClick={() => startRecording('opacity60')}
             className={currentlyRecording === 'opacity60' ? 'recording' : ''}
           >
-            {currentlyRecording === 'opacity60' ? 'Pressione teclas...' : shortcuts.opacity60 || 'Definir'}
+            {getKeyboardIcon('opacity60')} {currentlyRecording === 'opacity60' ? 'Pressione teclas...' : localShortcuts.opacity60 || 'Definir'}
           </button>
         </div>
         
-        <div className="shortcut-item">
+        <div className="shortcut-item-config">
           <span>Opacidade 100%:</span>
           <button 
             onClick={() => startRecording('opacity100')}
             className={currentlyRecording === 'opacity100' ? 'recording' : ''}
           >
-            {currentlyRecording === 'opacity100' ? 'Pressione teclas...' : shortcuts.opacity100 || 'Definir'}
+            {getKeyboardIcon('opacity100')} {currentlyRecording === 'opacity100' ? 'Pressione teclas...' : localShortcuts.opacity100 || 'Definir'}
           </button>
         </div>
       </div>
       
       <div className="button-group">
-        <button onClick={saveSettings}>Salvar</button>
-        <button onClick={onClose}>Cancelar</button>
+        <button className="btn-primary" onClick={saveSettings}>Salvar</button>
+        <button className="btn-secondary" onClick={onClose}>Cancelar</button>
       </div>
     </div>
   );

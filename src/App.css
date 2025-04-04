@@ -1,229 +1,345 @@
-/* App.css Atualizado */
+/* App.css Melhorado */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   overflow: hidden;
+  background: transparent;
 }
 
 .app {
-  background-color: rgba(30, 30, 30, 0.9);
+  background-color: rgba(22, 22, 26, 0.92);
   color: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   width: 100vw;
   height: 100vh;
-  -webkit-app-region: drag; /* Permite mover a janela */
-  transition: opacity 0.3s ease-in-out;
+  -webkit-app-region: drag;
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  background-color: rgba(20, 20, 20, 0.8);
+  padding: 12px 16px;
+  background-color: rgba(16, 16, 20, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.header-title {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  opacity: 0.85;
 }
 
 .header-buttons {
   display: flex;
-  gap: 8px;
+  gap: 12px;
 }
 
 .header button {
-  -webkit-app-region: no-drag; /* Permite clicar no botão */
+  -webkit-app-region: no-drag;
   background: none;
   border: none;
-  color: #ddd;
+  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
   font-size: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
 
 .header button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
+.header button:active {
+  transform: scale(0.92);
+}
+
 .header button:disabled {
-  color: #555;
+  color: rgba(255, 255, 255, 0.3);
   cursor: not-allowed;
 }
 
 .preview {
-  padding: 10px;
+  padding: 12px;
   text-align: center;
-  max-height: 150px;
+  max-height: 180px;
   overflow: hidden;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .preview img {
   max-width: 100%;
-  max-height: 120px;
+  max-height: 160px;
   object-fit: contain;
-  border-radius: 4px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  overflow: hidden;
 }
 
 .solution-area {
-  padding: 10px;
-  margin: 5px;
-  background-color: rgba(40, 40, 40, 0.7);
-  border-radius: 4px;
-  max-height: calc(100vh - 250px);
+  flex: 1;
+  padding: 16px;
+  margin-bottom: 12px;
+  background-color: rgba(40, 40, 48, 0.5);
+  border-radius: 8px;
   overflow-y: auto;
-  min-height: 150px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.solution-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.solution-area::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.solution-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.solution-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .solution-content {
   width: 100%;
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.5;
   margin: 0;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #999;
+  color: rgba(255, 255, 255, 0.6);
   font-style: italic;
-  animation: pulse 1.5s infinite;
+  height: 100%;
+  width: 100%;
 }
 
-@keyframes pulse {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.control-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
 }
 
 .capture-btn {
   -webkit-app-region: no-drag;
-  display: block;
-  margin: 10px auto;
-  padding: 8px 15px;
-  background-color: #007bff;
+  flex: 1;
+  padding: 10px 15px;
+  background-color: #2563eb;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .capture-btn:hover {
-  background-color: #0069d9;
+  background-color: #1d4ed8;
+}
+
+.capture-btn:active {
+  transform: scale(0.98);
 }
 
 .capture-btn:disabled {
-  background-color: #6c757d;
+  background-color: #475569;
   cursor: not-allowed;
 }
 
+.opacity-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.opacity-btn {
+  -webkit-app-region: no-drag;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.opacity-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.opacity-btn.active {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.error-message {
+  background-color: rgba(220, 38, 38, 0.2);
+  color: #fecaca;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Estilos para configurações */
 .settings-modal {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
   height: 100%;
   box-sizing: border-box;
+  background-color: rgba(22, 22, 26, 0.95);
 }
 
 .settings-modal h3 {
   margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 10px;
+  padding-bottom: 12px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .settings-modal input {
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background-color: #333;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(30, 30, 36, 0.7);
   color: white;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.settings-modal input:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .shortcut-info {
-  background-color: rgba(40, 40, 40, 0.7);
-  padding: 10px;
-  border-radius: 4px;
+  background-color: rgba(40, 40, 48, 0.5);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .shortcut-info p {
   margin-top: 0;
-  font-weight: bold;
-}
-
-.shortcut-info ul {
-  margin: 0;
-  padding-left: 20px;
-}
-
-.configure-shortcuts-btn {
-  width: 100%;
-  background-color: #555;
-  color: white;
-  border: none;
-  padding: 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 5px;
-}
-
-.configure-shortcuts-btn:hover {
-  background-color: #666;
-}
-
-/* Estilos para o componente de configuração de atalhos */
-.shortcut-settings {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.shortcut-error {
-  color: #ff6b6b;
-  background-color: rgba(255, 0, 0, 0.1);
-  padding: 8px;
-  border-radius: 4px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 10px;
-}
-
-.shortcut-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
 .shortcut-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
 }
 
-.shortcut-item button {
-  padding: 6px 10px;
-  background-color: #444;
+.shortcut-item span:first-child {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.shortcut-item span:last-child {
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'JetBrains Mono', monospace;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.configure-shortcuts-btn {
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.1);
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 10px;
+  border-radius: 6px;
   cursor: pointer;
-  min-width: 120px;
-  text-align: center;
+  margin-top: 8px;
+  transition: all 0.2s;
+  font-size: 14px;
 }
 
-.shortcut-item button:hover {
-  background-color: #555;
-}
-
-.shortcut-item button.recording {
-  background-color: #007bff;
-  animation: pulse 1.5s infinite;
+.configure-shortcuts-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .button-group {
@@ -232,26 +348,113 @@ body {
   margin-top: auto;
 }
 
-.settings-modal button {
+.btn-primary {
   -webkit-app-region: no-drag;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 10px 15px;
+  border-radius: 6px;
   border: none;
-  background-color: #007bff;
+  background-color: #2563eb;
   color: white;
   cursor: pointer;
   flex: 1;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.settings-modal button:hover {
-  background-color: #0069d9;
+.btn-primary:hover {
+  background-color: #1d4ed8;
 }
 
-.settings-modal button:last-child {
-  background-color: #6c757d;
+.btn-secondary {
+  -webkit-app-region: no-drag;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.2s;
+  font-size: 14px;
 }
 
-.settings-modal button:last-child:hover {
-  background-color: #5a6268;
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Estilos para configuração de atalhos */
+.shortcut-settings {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  box-sizing: border-box;
+  background-color: rgba(22, 22, 26, 0.95);
+}
+
+.shortcut-error {
+  color: #fca5a5;
+  background-color: rgba(220, 38, 38, 0.2);
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shortcut-item-config {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.shortcut-item-config button {
+  padding: 8px 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 130px;
+  text-align: center;
+  transition: all 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+.shortcut-item-config button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.shortcut-item-config button.recording {
+  background-color: #2563eb;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* Estilo para modo anti-detecção */
+.anti-detection-mode {
+  background-color: rgba(30, 30, 30, 0.01) !important;
+  backdrop-filter: blur(5px);
+  border-color: transparent !important;
+  color: rgba(255, 255, 255, 0.01) !important;
+}
+
+.anti-detection-mode button, 
+.anti-detection-mode input,
+.anti-detection-mode pre {
+  color: rgba(255, 255, 255, 0.01) !important;
 }
