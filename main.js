@@ -25,8 +25,10 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 600,
     height: 700,
-    frame: false,
-    transparent: true,
+    // --- MODIFICAÇÕES AQUI ---
+    frame: true,        // Adicionado: Mostra a moldura padrão da janela
+    transparent: false, // Modificado: Janela deixa de ser transparente
+    // --- FIM DAS MODIFICAÇÕES ---
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -34,8 +36,11 @@ function createWindow() {
     },
     icon: path.join(__dirname, 'assets/icon.png'),
     skipTaskbar: true,
-    alwaysOnTop: true
+    alwaysOnTop: true // Pode ser necessário remover se frame:true causar problemas
   });
+
+  // Descomente a linha abaixo se o problema persistir, para testar
+  // app.disableHardwareAcceleration();
 
   if (process.argv.includes('--dev')) {
     mainWindow.loadURL('http://localhost:5555');
@@ -43,10 +48,11 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
   }
 
-  mainWindow.setHasShadow(false);
+  // mainWindow.setHasShadow(false); // Com frame:true, a sombra é gerenciada pelo OS
   registerShortcuts();
 }
 
+// Função registerShortcuts (com logs de debug) permanece a mesma da resposta anterior
 function registerShortcuts() {
   globalShortcut.unregisterAll();
 
@@ -174,7 +180,7 @@ function registerShortcuts() {
   }
 }
 
-
+// Função captureScreen permanece a mesma
 async function captureScreen() {
   try {
     if (!mainWindow || mainWindow.isDestroyed()) {
@@ -190,24 +196,31 @@ async function captureScreen() {
 
     const wasVisible = mainWindow.isVisible();
     if (wasVisible) {
-      mainWindow.hide();
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // Para janelas com frame, talvez não precise esconder para capturar
+      // mainWindow.hide();
+      // await new Promise(resolve => setTimeout(resolve, 150));
     }
 
     let imgBuffer;
     try {
        console.log(`Tentando capturar display específico: ${display.id}`);
+       // Captura de janela com frame pode precisar ser ajustada
+       // Talvez capturar a tela inteira e depois recortar a área da janela
+       // ou usar API específica para capturar conteúdo da janela.
+       // Por simplicidade, vamos manter a captura de tela inteira por enquanto.
        imgBuffer = await screenshot({ screen: display.id });
+       // Alternativa: capturar apenas a janela (pode não funcionar bem com frame:true em alguns OS)
+       // imgBuffer = await screenshot({ window: mainWindow.getNativeWindowHandle() });
     } catch (captureErr) {
        console.warn(`Falha ao capturar display ${display.id}, tentando primária:`, captureErr);
        imgBuffer = await screenshot();
     }
 
-
-    if (wasVisible) {
-      mainWindow.show();
+    if (wasVisible /*&& !mainWindow.isVisible()*/) { // Ajuste se não escondeu
+      // mainWindow.show();
     }
 
+    // O recorte pode precisar ser ajustado se a captura for da janela em vez da tela
     const cropX = Math.round((bounds.x - display.bounds.x) * scaleFactor);
     const cropY = Math.round((bounds.y - display.bounds.y) * scaleFactor);
     const cropWidth = Math.round(bounds.width * scaleFactor);
@@ -238,6 +251,8 @@ async function captureScreen() {
   }
 }
 
+
+// Restante do código (ipcMain handlers, app events) permanece o mesmo
 app.whenReady().then(createWindow);
 
 ipcMain.handle('capture-screen', () => {
