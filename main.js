@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, screen } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const CryptoJS = require('crypto-js');
@@ -39,7 +39,6 @@ function createWindow() {
 
   if (process.argv.includes('--dev')) {
     mainWindow.loadURL('http://localhost:5555');
-    // mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
     mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
   }
@@ -49,52 +48,164 @@ function createWindow() {
 }
 
 function registerShortcuts() {
-  globalShortcut.unregisterAll();
+  globalShortcut.unregisterAll(); // Limpa atalhos anteriores
+
   const shortcuts = store.get('shortcuts') || DEFAULT_SHORTCUTS;
+  console.log('Registrando atalhos:', shortcuts); // Log para ver quais atalhos estão sendo lidos
 
   if (shortcuts.capture) {
-    globalShortcut.register(shortcuts.capture, () => {
+    if (globalShortcut.isRegistered(shortcuts.capture)) {
+         console.warn(`Atalho ${shortcuts.capture} já registrado? Tentando registrar novamente.`);
+    }
+    const registeredCapture = globalShortcut.register(shortcuts.capture, () => {
+      console.log(`Atalho ${shortcuts.capture} pressionado - Capturando tela`);
       captureScreen();
     });
+     if (!registeredCapture) {
+        console.error(`Falha ao registrar atalho: ${shortcuts.capture}`);
+     } else {
+        console.log(`Atalho ${shortcuts.capture} registrado com sucesso.`);
+     }
   }
 
   if (shortcuts.toggle) {
-    globalShortcut.register(shortcuts.toggle, () => {
-      mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+     if (globalShortcut.isRegistered(shortcuts.toggle)) {
+         console.warn(`Atalho ${shortcuts.toggle} já registrado? Tentando registrar novamente.`);
+     }
+    const registeredToggle = globalShortcut.register(shortcuts.toggle, () => {
+       console.log(`Atalho ${shortcuts.toggle} pressionado - Alternando visibilidade`);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+         mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+      } else {
+         console.error('mainWindow não definida ou destruída ao tentar alternar visibilidade.');
+      }
     });
+     if (!registeredToggle) {
+        console.error(`Falha ao registrar atalho: ${shortcuts.toggle}`);
+     } else {
+        console.log(`Atalho ${shortcuts.toggle} registrado com sucesso.`);
+     }
   }
 
-  // Opacity shortcuts remain the same
+  // Registra atalhos de opacidade com logs
   if (shortcuts.opacity30) {
-      globalShortcut.register(shortcuts.opacity30, () => mainWindow.setOpacity(0.3));
+     if (globalShortcut.isRegistered(shortcuts.opacity30)) {
+         console.warn(`Atalho ${shortcuts.opacity30} já registrado? Tentando registrar novamente.`);
+     }
+    const registeredOp30 = globalShortcut.register(shortcuts.opacity30, () => {
+      console.log(`Atalho ${shortcuts.opacity30} pressionado - Definindo opacidade para 0.3`);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setOpacity(0.3);
+      } else {
+        console.error('mainWindow não definida ou destruída ao tentar setar opacidade 0.3.');
+      }
+    });
+     if (!registeredOp30) {
+        console.error(`Falha ao registrar atalho: ${shortcuts.opacity30}`);
+     } else {
+        console.log(`Atalho ${shortcuts.opacity30} registrado com sucesso.`);
+     }
   }
+
   if (shortcuts.opacity60) {
-      globalShortcut.register(shortcuts.opacity60, () => mainWindow.setOpacity(0.6));
+     if (globalShortcut.isRegistered(shortcuts.opacity60)) {
+         console.warn(`Atalho ${shortcuts.opacity60} já registrado? Tentando registrar novamente.`);
+     }
+    const registeredOp60 = globalShortcut.register(shortcuts.opacity60, () => {
+      console.log(`Atalho ${shortcuts.opacity60} pressionado - Definindo opacidade para 0.6`);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setOpacity(0.6);
+      } else {
+         console.error('mainWindow não definida ou destruída ao tentar setar opacidade 0.6.');
+      }
+    });
+     if (!registeredOp60) {
+        console.error(`Falha ao registrar atalho: ${shortcuts.opacity60}`);
+     } else {
+        console.log(`Atalho ${shortcuts.opacity60} registrado com sucesso.`);
+     }
   }
+
   if (shortcuts.opacity100) {
-      globalShortcut.register(shortcuts.opacity100, () => mainWindow.setOpacity(1.0));
+     if (globalShortcut.isRegistered(shortcuts.opacity100)) {
+         console.warn(`Atalho ${shortcuts.opacity100} já registrado? Tentando registrar novamente.`);
+     }
+    const registeredOp100 = globalShortcut.register(shortcuts.opacity100, () => {
+      console.log(`Atalho ${shortcuts.opacity100} pressionado - Definindo opacidade para 1.0`);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setOpacity(1.0);
+      } else {
+         console.error('mainWindow não definida ou destruída ao tentar setar opacidade 1.0.');
+      }
+    });
+     if (!registeredOp100) {
+        console.error(`Falha ao registrar atalho: ${shortcuts.opacity100}`);
+     } else {
+        console.log(`Atalho ${shortcuts.opacity100} registrado com sucesso.`);
+     }
   }
 }
 
-
 async function captureScreen() {
   try {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      console.error('Janela principal não encontrada ou destruída.');
+      return;
+    }
+
+    const bounds = mainWindow.getBounds();
+    const display = screen.getDisplayMatching(bounds);
+    const scaleFactor = display.scaleFactor;
+
+    console.log(`Janela em display ${display.id}. Bounds Janela: ${JSON.stringify(bounds)}, Bounds Display: ${JSON.stringify(display.bounds)}, ScaleFactor: ${scaleFactor}`);
+
     const wasVisible = mainWindow.isVisible();
     if (wasVisible) {
       mainWindow.hide();
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
     }
 
-    const img = await screenshot();
+    let imgBuffer;
+    try {
+       console.log(`Tentando capturar display específico: ${display.id}`);
+       imgBuffer = await screenshot({ screen: display.id });
+    } catch (captureErr) {
+       console.warn(`Falha ao capturar display ${display.id}, tentando primária:`, captureErr);
+       imgBuffer = await screenshot();
+    }
+
 
     if (wasVisible) {
       mainWindow.show();
     }
 
-    mainWindow.webContents.send('screenshot-captured', img.toString('base64'));
+    const cropX = Math.round((bounds.x - display.bounds.x) * scaleFactor);
+    const cropY = Math.round((bounds.y - display.bounds.y) * scaleFactor);
+    const cropWidth = Math.round(bounds.width * scaleFactor);
+    const cropHeight = Math.round(bounds.height * scaleFactor);
+
+    const cropBounds = {
+        x: cropX,
+        y: cropY,
+        width: cropWidth,
+        height: cropHeight
+    };
+
+    console.log(`Enviando para recorte. Bounds Calculados (físicos): ${JSON.stringify(cropBounds)}`);
+
+    mainWindow.webContents.send('full-screenshot-info', {
+      imgBase64: imgBuffer.toString('base64'),
+      bounds: cropBounds
+    });
+
   } catch (error) {
-    console.error('Erro na captura:', error);
-    mainWindow.webContents.send('screenshot-error', error.message);
+    console.error('Erro na captura de tela:', error);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (!mainWindow.isVisible()) {
+         mainWindow.show();
+      }
+      mainWindow.webContents.send('screenshot-error', `Falha ao capturar/processar screenshot: ${error.message}`);
+    }
   }
 }
 
@@ -136,7 +247,6 @@ ipcMain.handle('save-shortcuts', (event, shortcuts) => {
   return true;
 });
 
-// Handlers for Cloudflare Account ID
 ipcMain.handle('get-cloudflare-account-id', () => {
   const encryptedId = store.get('cloudflareAccountId');
   if (!encryptedId) return null;
@@ -159,7 +269,6 @@ ipcMain.handle('save-cloudflare-account-id', (event, accountId) => {
   }
 });
 
-// Handlers for Cloudflare API Token
 ipcMain.handle('get-cloudflare-api-token', () => {
   const encryptedToken = store.get('cloudflareApiToken');
   if (!encryptedToken) return null;
@@ -181,7 +290,6 @@ ipcMain.handle('save-cloudflare-api-token', (event, apiToken) => {
     return false;
   }
 });
-
 
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {

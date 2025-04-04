@@ -1,60 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-// Removed OCRService import as it's no longer directly used here
 import AIService from './services/AIService';
 import ShortcutSettings from './components/ShortcutSettings';
-import AntiDetection from './utils/anti-detection'; // Keep if needed
+import AntiDetection from './utils/anti-detection';
 
 function App() {
   const [screenshot, setScreenshot] = useState(null);
-  const [text, setText] = useState(''); // Can be used for status messages now
+  const [text, setText] = useState('');
   const [solution, setSolution] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [apiKey, setApiKey] = useState(''); // Gemini API Key
-  const [cloudflareAccountId, setCloudflareAccountId] = useState(''); // Cloudflare Account ID
-  const [cloudflareApiToken, setCloudflareApiToken] = useState(''); // Cloudflare API Token
+  const [apiKey, setApiKey] = useState('');
+  const [cloudflareAccountId, setCloudflareAccountId] = useState('');
+  const [cloudflareApiToken, setCloudflareApiToken] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [opacity, setOpacity] = useState(1);
   const [error, setError] = useState('');
   const [antiDetectionMode, setAntiDetectionMode] = useState(true);
   const [shortcuts, setShortcuts] = useState({});
 
   useEffect(() => {
     loadSettings();
-
-    window.electronAPI.onScreenshotCaptured((imgData) => {
-      // Optionally display the captured screenshot briefly
-      setScreenshot(`data:image/png;base64,${imgData}`);
-      // Process the image (upload and send URL to AI)
-      processImage(imgData);
+    window.electronAPI.onFullScreenshotInfo(({ imgBase64: fullImgBase64, bounds }) => {
+       cropAndProcessImage(fullImgBase64, bounds);
     });
-
     window.electronAPI.onScreenshotError((message) => {
       setError(`Erro na captura: ${message}`);
-      setTimeout(() => setError(''), 5000); // Show error longer
+       setIsProcessing(false);
+      setTimeout(() => setError(''), 5000);
     });
-
-    // No keydown listener needed here for opacity anymore, handled in main.js
-
-    toggleAntiDetectionMode(true); // Keep if using anti-detection features
-
-  }, []); // Empty dependency array ensures this runs only once on mount
+    toggleAntiDetectionMode(true);
+  }, []);
 
   const loadSettings = async () => {
-    try {
+     try {
       const key = await window.electronAPI.getApiKey();
       if (key) setApiKey(key);
-
       const cfAccountId = await window.electronAPI.getCloudflareAccountId();
       if (cfAccountId) setCloudflareAccountId(cfAccountId);
-
       const cfApiToken = await window.electronAPI.getCloudflareApiToken();
       if (cfApiToken) setCloudflareApiToken(cfApiToken);
-
       const savedShortcuts = await window.electronAPI.getShortcuts();
       setShortcuts(savedShortcuts || {});
-
     } catch (err) {
       console.error('Erro ao carregar configurações:', err);
       setError('Falha ao carregar configurações.');
@@ -62,96 +48,113 @@ function App() {
     }
   };
 
-  // processImage is now the core function for the new workflow
-  const processImage = async (imgBase64Data) => {
-    setIsProcessing(true);
-    setSolution('');
-    setError('');
-    setText(''); // Clear previous status/text
+  const cropAndProcessImage = (fullImgBase64, bounds) => {
+      setText('Recortando imagem...');
+      setIsProcessing(true);
+      setError('');
+      setSolution('');
+      setScreenshot(null);
 
-    try {
-      // Check credentials
-      if (!cloudflareAccountId) {
-         setError('Configure o Cloudflare Account ID nas configurações.');
-         setIsProcessing(false);
-         return;
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = bounds.width;
+        canvas.height = bounds.height;
+        const ctx = canvas.getContext('2d');
+
+        try {
+            ctx.drawImage(
+              image,
+              bounds.x,
+              bounds.y,
+              bounds.width,
+              bounds.height,
+              0,
+              0,
+              bounds.width,
+              bounds.height
+            );
+            const croppedImgBase64 = canvas.toDataURL('image/png').split(',')[1];
+            setScreenshot(`data:image/png;base64,${croppedImgBase64}`);
+            processCroppedImage(croppedImgBase64);
+        } catch(e) {
+            console.error("Erro ao recortar imagem no canvas:", e);
+            setError(`Erro ao recortar imagem: ${e.message}`);
+            setIsProcessing(false);
+            setText('');
+        }
+      };
+      image.onerror = (err) => {
+          console.error("Erro ao carregar imagem da tela inteira:", err);
+          setError("Falha ao carregar imagem capturada para recorte.");
+          setIsProcessing(false);
+          setText('');
+      };
+      image.src = `data:image/png;base64,${fullImgBase64}`;
+  }
+
+  const processCroppedImage = async (croppedImgBase64) => {
+      setText('Fazendo upload da imagem recortada...');
+      setError('');
+      setSolution('');
+      try {
+        if (!cloudflareAccountId || !cloudflareApiToken || !apiKey) {
+           setError('Credenciais ausentes. Verifique as configurações.');
+           setIsProcessing(false);
+           return;
+        }
+        const imageUrl = await AIService.uploadToCloudflare(croppedImgBase64, cloudflareAccountId, cloudflareApiToken);
+        if (!imageUrl) {
+           throw new Error('Falha no upload da imagem para o Cloudflare.');
+        }
+        setText('Analisando imagem com Gemini...');
+        const aiSolution = await AIService.generateSolutionFromUrl(imageUrl, apiKey);
+        setSolution(aiSolution);
+        setText('');
+      } catch (err) {
+         console.error('Erro no processamento da imagem recortada:', err);
+         setError(`Erro: ${err.message || 'Falha ao processar/analisar imagem.'}`);
+         setSolution('');
+         setText('');
+      } finally {
+        setIsProcessing(false);
       }
-      if (!cloudflareApiToken) {
-         setError('Configure o Cloudflare API Token nas configurações.');
-         setIsProcessing(false);
-         return;
-      }
-      if (!apiKey) {
-         setError('Configure uma API key Gemini válida nas configurações.');
-         setIsProcessing(false);
-         return;
-      }
-
-      setText('Fazendo upload da imagem...'); // Update status
-
-      // 1. Upload screenshot to Cloudflare
-      const imageUrl = await AIService.uploadToCloudflare(imgBase64Data, cloudflareAccountId, cloudflareApiToken);
-
-      if (!imageUrl) {
-         throw new Error('Falha no upload da imagem para o Cloudflare.');
-      }
-
-      setText('Analisando imagem com Gemini...'); // Update status
-
-      // 2. Send image URL to Gemini via proxy
-      const aiSolution = await AIService.generateSolutionFromUrl(imageUrl, apiKey);
-      setSolution(aiSolution);
-      setText(''); // Clear status on success
-
-    } catch (err) {
-       console.error('Erro no processamento da imagem:', err);
-       setError(`Erro: ${err.message || 'Falha ao processar imagem/gerar solução.'}`);
-       setSolution(''); // Clear any partial solution
-       setText(''); // Clear status on error
-    } finally {
-      setIsProcessing(false);
-    }
   };
 
-
   const saveSettings = async () => {
-    try {
+     try {
       await window.electronAPI.saveApiKey(apiKey);
       await window.electronAPI.saveCloudflareAccountId(cloudflareAccountId);
       await window.electronAPI.saveCloudflareApiToken(cloudflareApiToken);
       setShowSettings(false);
-      setError(''); // Clear error on save
+      setError('');
     } catch (err) {
         console.error('Erro ao salvar configurações:', err);
         setError('Falha ao salvar configurações.');
     }
   };
 
-
   const captureManually = () => {
     window.electronAPI.captureScreen();
   };
 
   const toggleAntiDetectionMode = (forceActivate = null) => {
-    const newMode = forceActivate !== null ? forceActivate : !antiDetectionMode;
-    setAntiDetectionMode(newMode);
-    AntiDetection.activateCamouflage(newMode);
+        const newMode = forceActivate !== null ? forceActivate : !antiDetectionMode;
+        setAntiDetectionMode(newMode);
+        AntiDetection.activateCamouflage(newMode);
   };
 
-
   return (
-    // Opacity is now controlled by main.js via setOpacity
-    <div className="app">
-      {showShortcuts ? (
-        <ShortcutSettings
-          onClose={() => setShowShortcuts(false)}
-          shortcuts={shortcuts}
-          setShortcuts={setShortcuts} // Pass the setter function
-        />
-      ) : showSettings ? (
+     <div className="app">
+       {showShortcuts ? (
+         <ShortcutSettings
+           onClose={() => setShowShortcuts(false)}
+           shortcuts={shortcuts}
+           setShortcuts={setShortcuts}
+         />
+       ) : showSettings ? (
         <div className="settings-modal">
           <h3>Configurações</h3>
-
           <div className="input-group">
             <label htmlFor="api-key">API Key Gemini</label>
             <input
@@ -163,7 +166,6 @@ function App() {
             />
              <small>Sua chave API é armazenada localmente.</small>
           </div>
-
           <div className="input-group">
             <label htmlFor="cf-account-id">Cloudflare Account ID</label>
             <input
@@ -175,7 +177,6 @@ function App() {
             />
              <small>Necessário para upload de imagens.</small>
           </div>
-
           <div className="input-group">
             <label htmlFor="cf-api-token">Cloudflare API Token</label>
             <input
@@ -187,8 +188,6 @@ function App() {
             />
              <small>Token com permissão de escrita no Cloudflare Images.</small>
           </div>
-
-
           <div className="input-group">
             <label>Modo Anti-Detecção</label>
             <div className="toggle-switch-container">
@@ -203,8 +202,6 @@ function App() {
             </div>
             <small>Camufla o app para evitar detecção.</small>
           </div>
-
-
           <div className="shortcut-info">
             <p>Atalhos Configurados</p>
              {Object.entries(shortcuts).map(([key, value]) => (
@@ -220,18 +217,15 @@ function App() {
               Configurar Atalhos
             </button>
           </div>
-
            {error && <div className="error-message" style={{ marginTop: '10px' }}>{error}</div>}
-
-
           <div className="button-group">
             <button className="btn-primary" onClick={saveSettings}>Salvar</button>
             <button className="btn-secondary" onClick={() => {setShowSettings(false); setError('');}}>Cancelar</button>
           </div>
         </div>
-      ) : (
-        <div className="main-interface">
-          <div className="header">
+       ) : (
+         <div className="main-interface">
+           <div className="header">
             <span className="header-title">Stupid Button Club</span>
             <div className="header-buttons">
               <span className={`api-key-status ${apiKey ? 'valid' : 'invalid'}`}>
@@ -248,53 +242,52 @@ function App() {
               </button>
             </div>
           </div>
-
-          <div className="main-content">
-            {/* Removed the input textarea as primary input is now screenshot */}
-             {/* Optionally display the captured screenshot preview */}
-             {screenshot && (
+           <div className="main-content">
+             {screenshot && !isProcessing && (
                 <div className="preview">
-                <p style={{ textAlign: 'center', margin: '5px 0', fontSize: '12px', color: '#aaa' }}>
-                    Última Captura:
-                </p>
-                <img src={screenshot} alt="Captura" />
+                 <p style={{ textAlign: 'center', margin: '5px 0', fontSize: '12px', color: '#aaa' }}>
+                     Preview da Área Capturada:
+                 </p>
+                 <img src={screenshot} alt="Captura Recortada" />
                 </div>
-            )}
-
-            <button
-              className="generate-btn"
-              onClick={captureManually}
-              disabled={isProcessing}
-            >
-              {isProcessing ? text || 'Processando...' : `Analisar Screenshot (${shortcuts.capture || 'Alt+S'})`}
-            </button>
-
-            <div className="solution-area">
-              {isProcessing && !solution && (
-                <div className="loading">
-                  <div className="spinner"></div>
-                  <span>{text || 'Processando...'}</span>
-                </div>
-              )}
-              {solution && !isProcessing && <pre className="solution-content">{solution}</pre>}
-              {error && <div className="error-message">{error}</div>}
-              {!isProcessing && !solution && !error && !text && (
-                <div className="placeholder-text">
-                  Pressione o botão ou use o atalho ({shortcuts.capture || 'Alt+S'}) para capturar e analisar a tela.
-                </div>
+             )}
+             {isProcessing && text.includes('Recortando') && (
+                 <div className="preview" style={{ color: '#ccc', textAlign: 'center', padding: '20px' }}>
+                     {text}
+                 </div>
+             )}
+             <button
+               className="generate-btn"
+               onClick={captureManually}
+               disabled={isProcessing}
+             >
+               {isProcessing ? text || 'Processando...' : `Analisar Área (${shortcuts.capture || 'Alt+S'})`}
+             </button>
+             <div className="solution-area">
+               {isProcessing && !text.includes('Recortando') && (
+                 <div className="loading">
+                   <div className="spinner"></div>
+                   <span>{text || 'Analisando...'}</span>
+                 </div>
                )}
-            </div>
-
-            <div className="keyboard-shortcuts">
+                {solution && !isProcessing && <pre className="solution-content">{solution}</pre>}
+               {error && <div className="error-message">{error}</div>}
+                {!isProcessing && !solution && !error && !text && (
+                 <div className="placeholder-text">
+                    Pressione o botão ou use o atalho ({shortcuts.capture || 'Alt+S'}) para capturar e analisar a área sob a janela.
+                 </div>
+                )}
+             </div>
+             <div className="keyboard-shortcuts">
               <p>Atalhos:</p>
-              <p>[{shortcuts.capture || 'Não def.'}]: Captura | [{shortcuts.toggle || 'Não def.'}]: Mostra/Oculta</p>
+              <p>[{shortcuts.capture || 'Não def.'}]: Captura Área | [{shortcuts.toggle || 'Não def.'}]: Mostra/Oculta</p>
               <p>[Alt+1][Alt+2][Alt+3]: Opacidade 30/60/100%</p>
               <p>© Stupid Button Club</p>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
+           </div>
+         </div>
+       )}
+     </div>
   );
 }
 
