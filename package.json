@@ -6,7 +6,8 @@
   "scripts": {
     "start": "electron .",
     "build": "react-scripts build",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "dev": "concurrently \"cross-env BROWSER=none PORT=5555 react-scripts start\" \"wait-on http://localhost:5555 && electron . --dev\""
   },
   "build": {
     "appId": "com.discreet.codeassistant",
@@ -50,5 +51,10 @@
     "react-scripts": "^5.0.1",
     "screenshot-desktop": "^1.15.1",
     "tesseract.js": "^6.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "wait-on": "^8.0.3"
   }
 }

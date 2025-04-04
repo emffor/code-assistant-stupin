@@ -23,7 +23,12 @@ function createWindow() {
    skipTaskbar: true
  });
 
- mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
+ if (process.argv.includes('--dev')) {
+  mainWindow.loadURL('http://localhost:5555');
+} else {
+  mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
+}
+
  registerShortcuts();
 }
 
