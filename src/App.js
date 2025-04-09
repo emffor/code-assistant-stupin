@@ -6,14 +6,13 @@ import BatchProcessingModal from './components/BatchProcessingModal';
 import AntiDetection from './utils/anti-detection';
 
 function App() {
-  // Estados existentes
   const [screenshot, setScreenshot] = useState(null);
   const [text, setText] = useState('');
   const [solution, setSolution] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [apiKey, setApiKey] = useState('');
-  const [cloudflareAccountId, setCloudflareAccountId] = useState('');
-  const [cloudflareApiToken, setCloudflareApiToken] = useState('');
+  const [supabaseUrl, setSupabaseUrl] = useState('');
+  const [supabaseKey, setSupabaseKey] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [opacity, setOpacity] = useState(1);
@@ -21,7 +20,6 @@ function App() {
   const [antiDetectionMode, setAntiDetectionMode] = useState(true);
   const [shortcuts, setShortcuts] = useState({});
   
-  // Novos estados para o sistema de lotes
   const [batchCount, setBatchCount] = useState(0);
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [batchData, setBatchData] = useState([]);
@@ -30,7 +28,6 @@ function App() {
   useEffect(() => {
     loadSettings();
     
-    // Listeners existentes
     window.electronAPI.onFullScreenshotInfo(({ imgBase64: fullImgBase64, bounds }) => {
       cropAndProcessImage(fullImgBase64, bounds);
     });
@@ -41,11 +38,9 @@ function App() {
       setTimeout(() => setError(''), 5000);
     });
     
-    // Novos listeners para o sistema de lotes
     window.electronAPI.onBatchScreenshotAdded(({ count, timestamp }) => {
       setBatchCount(count);
       setLastBatchTimestamp(timestamp);
-      // Feedback visual ao usuário
       const notification = document.createElement('div');
       notification.className = 'batch-notification';
       notification.textContent = `Captura #${count} adicionada ao lote`;
@@ -75,7 +70,6 @@ function App() {
     };
   }, [shortcuts]);
 
-  // Carrega o contador de lote atual ao iniciar
   useEffect(() => {
     const loadBatchCount = async () => {
       try {
@@ -89,7 +83,6 @@ function App() {
     loadBatchCount();
   }, []);
 
-  // Handler para atalhos de opacidade
   const handleKeyPress = (e) => {
     if (e.altKey) {
       const key = e.key;
@@ -107,10 +100,13 @@ function App() {
      try {
       const key = await window.electronAPI.getApiKey();
       if (key) setApiKey(key);
-      const cfAccountId = await window.electronAPI.getCloudflareAccountId();
-      if (cfAccountId) setCloudflareAccountId(cfAccountId);
-      const cfApiToken = await window.electronAPI.getCloudflareApiToken();
-      if (cfApiToken) setCloudflareApiToken(cfApiToken);
+      
+      const sbUrl = await window.electronAPI.getSupabaseUrl();
+      if (sbUrl) setSupabaseUrl(sbUrl);
+      
+      const sbKey = await window.electronAPI.getSupabaseKey();
+      if (sbKey) setSupabaseKey(sbKey);
+      
       const savedShortcuts = await window.electronAPI.getShortcuts();
       setShortcuts(savedShortcuts || {});
     } catch (err) {
@@ -166,19 +162,25 @@ function App() {
   };
 
   const processCroppedImage = async (croppedImgBase64) => {
-      setText('Fazendo upload da imagem recortada...');
+      setText('Fazendo upload da imagem...');
       setError('');
       setSolution('');
       try {
-        if (!cloudflareAccountId || !cloudflareApiToken || !apiKey) {
+        if (!supabaseUrl || !supabaseKey || !apiKey) {
            setError('Credenciais ausentes. Verifique as configurações.');
            setIsProcessing(false);
            return;
         }
-        const imageUrl = await AIService.uploadToCloudflare(croppedImgBase64, cloudflareAccountId, cloudflareApiToken);
+        
+        // Definir env vars dinamicamente para o service
+        process.env.SUPABASE_URL = supabaseUrl;
+        process.env.SUPABASE_KEY = supabaseKey;
+        
+        const imageUrl = await AIService.uploadToSupabase(croppedImgBase64);
         if (!imageUrl) {
-           throw new Error('Falha no upload da imagem para o Cloudflare.');
+           throw new Error('Falha no upload da imagem para o Supabase.');
         }
+        
         setText('Analisando imagem com Gemini...');
         const aiSolution = await AIService.generateSolutionFromUrl(imageUrl, apiKey);
         setSolution(aiSolution);
@@ -193,35 +195,23 @@ function App() {
       }
   };
   
-  // Nova função para processar lote de capturas
   const processBatchScreenshots = async (batchItems, progressCallback) => {
     const results = [];
     
     for (let i = 0; i < batchItems.length; i++) {
       try {
-        // Extrai dados da imagem do lote
         const item = batchItems[i];
-        
-        // Cria uma imagem para recortar
         const image = await createImageFromBase64(item.imgBase64);
-        
-        // Recorta a imagem usando o canvas
         const croppedBase64 = cropImageWithCanvas(image, item.bounds);
         
-        // Faz upload para o Cloudflare
-        const imageUrl = await AIService.uploadToCloudflare(
-          croppedBase64, 
-          cloudflareAccountId, 
-          cloudflareApiToken
-        );
+        process.env.SUPABASE_URL = supabaseUrl;
+        process.env.SUPABASE_KEY = supabaseKey;
         
-        // Processa a imagem com a IA
+        const imageUrl = await AIService.uploadToSupabase(croppedBase64);
         const aiResult = await AIService.generateSolutionFromUrl(imageUrl, apiKey);
         
-        // Adiciona ao array de resultados
         results.push(aiResult);
         
-        // Chama o callback de progresso
         if (progressCallback) {
           progressCallback(i, aiResult);
         }
@@ -239,7 +229,6 @@ function App() {
     return results;
   };
   
-  // Helper para criar uma imagem a partir de base64
   const createImageFromBase64 = (base64) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -249,7 +238,6 @@ function App() {
     });
   };
   
-  // Helper para recortar imagem usando canvas
   const cropImageWithCanvas = (image, bounds) => {
     const canvas = document.createElement('canvas');
     canvas.width = bounds.width;
@@ -274,8 +262,8 @@ function App() {
   const saveSettings = async () => {
      try {
       await window.electronAPI.saveApiKey(apiKey);
-      await window.electronAPI.saveCloudflareAccountId(cloudflareAccountId);
-      await window.electronAPI.saveCloudflareApiToken(cloudflareApiToken);
+      await window.electronAPI.saveSupabaseUrl(supabaseUrl);
+      await window.electronAPI.saveSupabaseKey(supabaseKey);
       setShowSettings(false);
       setError('');
     } catch (err) {
@@ -294,7 +282,6 @@ function App() {
         AntiDetection.activateCamouflage(newMode);
   };
   
-  // Função para limpar o lote atual
   const clearBatch = async () => {
     try {
       await window.electronAPI.clearBatch();
@@ -341,26 +328,26 @@ function App() {
              <small>Sua chave API é armazenada localmente.</small>
           </div>
           <div className="input-group">
-            <label htmlFor="cf-account-id">Cloudflare Account ID</label>
+            <label htmlFor="supabase-url">Supabase URL</label>
             <input
-              id="cf-account-id"
+              id="supabase-url"
               type="text"
-              placeholder="Seu Cloudflare Account ID"
-              value={cloudflareAccountId}
-              onChange={(e) => setCloudflareAccountId(e.target.value)}
+              placeholder="Sua URL do Supabase"
+              value={supabaseUrl}
+              onChange={(e) => setSupabaseUrl(e.target.value)}
             />
-             <small>Necessário para upload de imagens.</small>
+             <small>URL completa do seu projeto Supabase.</small>
           </div>
           <div className="input-group">
-            <label htmlFor="cf-api-token">Cloudflare API Token</label>
+            <label htmlFor="supabase-key">Supabase Anon Key</label>
             <input
-              id="cf-api-token"
+              id="supabase-key"
               type="password"
-              placeholder="Seu Cloudflare API Token (Images)"
-              value={cloudflareApiToken}
-              onChange={(e) => setCloudflareApiToken(e.target.value)}
+              placeholder="Sua chave anon do Supabase"
+              value={supabaseKey}
+              onChange={(e) => setSupabaseKey(e.target.value)}
             />
-             <small>Token com permissão de escrita no Cloudflare Images.</small>
+             <small>Chave de acesso anônimo ao Supabase.</small>
           </div>
           <div className="input-group">
             <label>Modo Anti-Detecção</label>
@@ -405,11 +392,10 @@ function App() {
               <span className={`api-key-status ${apiKey ? 'valid' : 'invalid'}`}>
                  {apiKey ? 'Gemini Key OK' : 'No Gemini Key'}
               </span>
-              <span className={`api-key-status ${(cloudflareAccountId && cloudflareApiToken) ? 'valid' : 'invalid'}`} style={{ marginLeft: '10px' }}>
-                 {(cloudflareAccountId && cloudflareApiToken) ? 'CF Keys OK' : 'No CF Keys'}
+              <span className={`api-key-status ${(supabaseUrl && supabaseKey) ? 'valid' : 'invalid'}`} style={{ marginLeft: '10px' }}>
+                 {(supabaseUrl && supabaseKey) ? 'Supabase OK' : 'No Supabase'}
               </span>
               
-              {/* Indicador de lote */}
               {batchCount > 0 && (
                 <div className="batch-indicator" onClick={() => setShowBatchModal(true)}>
                   <span className="batch-count">{batchCount}</span>
@@ -441,7 +427,6 @@ function App() {
               </div>
             )}
             
-            {/* Botões de captura */}
             <div className="capture-buttons">
               <button
                 className="generate-btn"
@@ -471,7 +456,6 @@ function App() {
               )}
             </div>
             
-            {/* Área de solução */}
             <div className="solution-area">
               {isProcessing && !text.includes('Recortando') && (
                 <div className="loading">

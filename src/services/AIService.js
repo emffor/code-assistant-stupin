@@ -1,111 +1,95 @@
-class AIService {
+import { createClient } from '@supabase/supabase-js';
 
-  static async uploadToCloudflare(imgBase64Data, accountId, apiToken) {
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseBucket = process.env.SUPABASE_BUCKET || 'screenshots';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+class AIService {
+  static async uploadToSupabase(imgBase64Data) {
     try {
       const blob = await fetch(`data:image/png;base64,${imgBase64Data}`).then(res => res.blob());
-
-      const formData = new FormData();
-      formData.append('file', blob, 'screenshot.png');
-
-      const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v1`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiToken}`,
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        let errorMsg = `Cloudflare upload failed: ${response.statusText}`;
-        try {
-            const errorData = await response.json();
-            errorMsg = `Cloudflare upload failed: ${errorData.errors[0]?.message || response.statusText}`;
-        } catch (e) { /* Ignore parsing error */ }
-        throw new Error(errorMsg);
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.result && data.result.variants && data.result.variants.length > 0) {
-        // Retorna o URL da primeira variante (geralmente a pública/web-friendly)
-        // Certifique-se que seu Cloudflare Images está configurado para permitir acesso público
-        return data.result.variants[0];
-      } else {
-        throw new Error('Cloudflare upload succeeded but no image URL was returned.');
-      }
+      const fileName = `screenshot_${Date.now()}.png`;
+      
+      const { data, error } = await supabase.storage
+        .from(supabaseBucket)
+        .upload(fileName, blob, {
+          contentType: 'image/png',
+          upsert: false
+        });
+      
+      if (error) throw new Error(`Supabase upload failed: ${error.message}`);
+      
+      const { data: urlData } = supabase.storage
+        .from(supabaseBucket)
+        .getPublicUrl(fileName);
+      
+      return urlData.publicUrl;
     } catch (error) {
-      console.error('Erro no upload para Cloudflare:', error);
-      throw error; // Re-lança o erro para ser tratado no App.js
+      console.error('Erro no upload para Supabase:', error);
+      throw error;
     }
   }
 
-
   static async generateSolutionFromUrl(imageUrl, apiKey) {
-    const PROXY_URL = 'https://SEU-WORKER.SEU_NOME.workers.dev'; // Substitua!
+    const EDGE_FUNCTION_URL = `${supabaseUrl}/functions/v1/process-image`;
 
     try {
-      const prompt = "Analise a imagem neste URL (que contém código ou uma descrição de problema) e explique a solução ou corrija o código. Seja conciso e direto.";
-
-      const response = await fetch(PROXY_URL, {
+      const response = await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
           'X-API-Key': apiKey
         },
         body: JSON.stringify({
-          prompt: prompt,
+          prompt: "Analise a imagem neste URL (que contém código ou uma descrição de problema) e explique a solução ou corrija o código. Seja conciso e direto.",
           imageUrl: imageUrl,
-          model: 'gemini-pro-vision' // Ou 'gemini-1.5-pro' ou outro modelo vision
+          model: 'gemini-pro-vision'
         })
       });
 
       if (!response.ok) {
-         let errorMsg = `API Proxy Error: ${response.statusText}`;
-         try {
-             const errorData = await response.json();
-             errorMsg = `API Proxy Error: ${errorData.error || response.statusText}`;
-         } catch(e) { /* Ignore parsing error */ }
-         throw new Error(errorMsg);
+        let errorMsg = `API Proxy Error: ${response.statusText}`;
+        try {
+            const errorData = await response.json();
+            errorMsg = `API Proxy Error: ${errorData.error || response.statusText}`;
+        } catch(e) {}
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
-      // Verifica se a resposta contém a solução esperada
+      
       if (data && typeof data.solution === 'string') {
           return data.solution;
       } else if (data && data.error) {
-          // Se o worker retornou um erro estruturado
           throw new Error(`Gemini Error (via Proxy): ${data.error}`);
-      }
-       else {
-          // Resposta inesperada do proxy
+      } else {
           console.error("Resposta inesperada do proxy:", data);
           throw new Error('Resposta inesperada do servidor proxy.');
       }
-
     } catch (error) {
        console.error('Erro ao chamar AIService.generateSolutionFromUrl:', error);
-       // Lança um erro mais informativo para a UI
        throw new Error(`Não foi possível gerar a solução: ${error.message}`);
     }
   }
 
-  // Manter a função antiga se precisar de análise de texto em outro lugar,
-  // caso contrário, pode remover.
   static async generateSolutionFromText(codeText, apiKey) {
-     const PROXY_URL = 'https://SEU-WORKER.SEU_NOME.workers.dev'; // Substitua!
+     const EDGE_FUNCTION_URL = `${supabaseUrl}/functions/v1/process-text`;
      try {
        const mode = this.detectCodeType(codeText);
        const prompt = this.generatePrompt(codeText, mode);
 
-       const response = await fetch(PROXY_URL, {
+       const response = await fetch(EDGE_FUNCTION_URL, {
          method: 'POST',
          headers: {
            'Content-Type': 'application/json',
+           'Authorization': `Bearer ${supabaseKey}`,
            'X-API-Key': apiKey
          },
          body: JSON.stringify({
-           text: prompt, // Payload antigo para texto
-           model: 'gemini-pro' // Modelo antigo para texto
+           text: prompt,
+           model: 'gemini-pro'
          })
        });
 
@@ -121,8 +105,6 @@ class AIService {
      }
   }
 
-  // Funções auxiliares detectCodeType e generatePrompt podem ser mantidas ou removidas
-  // se generateSolutionFromText for removida.
   static detectCodeType(text) {
       const lowerText = text.toLowerCase();
       if (lowerText.includes('javascript') || lowerText.includes('js') ||
@@ -135,7 +117,6 @@ class AIService {
               text.includes(':') || text.includes('self.')) {
         return 'python';
       }
-      // ... outras detecções ...
       else if (lowerText.includes('error') || lowerText.includes('exception') ||
           lowerText.includes('failed') || lowerText.includes('bug')) {
         return 'debug';
@@ -147,13 +128,11 @@ class AIService {
       const prompts = {
         'javascript': `Analise este código JavaScript e explique a solução. Seja conciso e direto:\n\n${codeText}`,
         'python': `Analise este código Python e explique a solução. Seja conciso e direto:\n\n${codeText}`,
-        // ... outros prompts ...
         'debug': `Identifique e corrija os erros neste código. Forneça a solução concisa:\n\n${codeText}`,
         'general': `Analise este código e explique a solução. Seja conciso e direto:\n\n${codeText}`
       };
       return prompts[mode] || prompts.general;
     }
-
 }
 
 export default AIService;

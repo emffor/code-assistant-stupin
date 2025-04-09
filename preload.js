@@ -12,12 +12,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getApiKey: () => ipcRenderer.invoke('get-api-key'),
   getShortcuts: () => ipcRenderer.invoke('get-shortcuts'),
   saveShortcuts: (shortcuts) => ipcRenderer.invoke('save-shortcuts', shortcuts),
-  saveCloudflareAccountId: (id) => ipcRenderer.invoke('save-cloudflare-account-id', id),
-  getCloudflareAccountId: () => ipcRenderer.invoke('get-cloudflare-account-id'),
-  saveCloudflareApiToken: (token) => ipcRenderer.invoke('save-cloudflare-api-token', token),
-  getCloudflareApiToken: () => ipcRenderer.invoke('get-cloudflare-api-token'),
   
-  // Novas funções para o sistema de captura em lote
+  // Supabase
+  saveSupabaseUrl: (url) => ipcRenderer.invoke('save-supabase-url', url),
+  getSupabaseUrl: () => ipcRenderer.invoke('get-supabase-url'),
+  saveSupabaseKey: (key) => ipcRenderer.invoke('save-supabase-key', key),
+  getSupabaseKey: () => ipcRenderer.invoke('get-supabase-key'),
+  
+  // Batch processing
   onBatchScreenshotAdded: (callback) =>
     ipcRenderer.on('batch-screenshot-added', (event, data) => callback(data)),
   onBatchScreenshots: (callback) =>

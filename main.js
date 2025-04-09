@@ -3,27 +3,27 @@ const path = require('path');
 const Store = require('electron-store');
 const CryptoJS = require('crypto-js');
 const screenshot = require('screenshot-desktop');
+require('dotenv').config();
 
 const store = new Store({
-  encryptionKey: 'app-secretkey-changethis',
+  encryptionKey: process.env.ENCRYPTION_KEY || 'app-secretkey-changethis',
   name: 'settings'
 });
 
-// Defina os atalhos padrão incluindo os novos para lote
 const DEFAULT_SHORTCUTS = {
   capture: 'Alt+S',
   toggle: 'Alt+H',
   opacity30: 'Alt+1',
   opacity60: 'Alt+2',
   opacity100: 'Alt+3',
-  batchCapture: 'Alt+D',  // Novo atalho para capturar para o lote
-  batchSend: 'Alt+F'      // Novo atalho para enviar o lote
+  batchCapture: 'Alt+D',
+  batchSend: 'Alt+F'
 };
 
-const ENCRYPTION_KEY = 'app-secretkey-changethis';
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'app-secretkey-changethis';
 
 let mainWindow;
-let screenshotBatch = []; // Array para armazenar capturas em lote
+let screenshotBatch = [];
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -86,7 +86,6 @@ function registerShortcuts() {
     }
   }
   
-  // Novos atalhos para captura em lote
   if (shortcuts.batchCapture) {
     const registeredBatchCapture = globalShortcut.register(shortcuts.batchCapture, () => {
       console.log(`[CALLBACK] Atalho ${shortcuts.batchCapture} pressionado.`);
@@ -174,7 +173,6 @@ async function captureScreen() {
   }
 }
 
-// Nova função para captura em lote
 async function captureScreenToBatch() {
   try {
     if (!mainWindow || mainWindow.isDestroyed()) {
@@ -220,10 +218,8 @@ async function captureScreenToBatch() {
       timestamp: Date.now()
     };
 
-    // Adiciona a screenshot ao lote
     screenshotBatch.push(screenshotItem);
     
-    // Notifica a interface sobre a nova captura
     mainWindow.webContents.send('batch-screenshot-added', {
       count: screenshotBatch.length,
       timestamp: screenshotItem.timestamp
@@ -237,7 +233,6 @@ async function captureScreenToBatch() {
   }
 }
 
-// Função para enviar as capturas em lote
 function sendBatchScreenshots() {
   if (screenshotBatch.length === 0) {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -248,9 +243,6 @@ function sendBatchScreenshots() {
   
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('batch-screenshots', screenshotBatch);
-    // Não limpa o lote automaticamente para permitir reprocessamento
-    // Se quiser limpar, descomente a linha abaixo
-    // screenshotBatch = [];
   }
 }
 
@@ -292,51 +284,42 @@ ipcMain.handle('save-shortcuts', (event, shortcuts) => {
   return true;
 });
 
-ipcMain.handle('get-cloudflare-account-id', () => {
-  const encryptedId = store.get('cloudflareAccountId');
-  if (!encryptedId) return null;
-  try {
-    return CryptoJS.AES.decrypt(encryptedId, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
-  } catch (error) {
-    console.error('Erro ao descriptografar Cloudflare Account ID:', error);
-    return null;
-  }
+ipcMain.handle('get-supabase-url', () => {
+  return process.env.SUPABASE_URL || store.get('supabaseUrl');
 });
 
-ipcMain.handle('save-cloudflare-account-id', (event, accountId) => {
+ipcMain.handle('save-supabase-url', (event, url) => {
   try {
-    const encrypted = CryptoJS.AES.encrypt(accountId, ENCRYPTION_KEY).toString();
-    store.set('cloudflareAccountId', encrypted);
+    store.set('supabaseUrl', url);
     return true;
   } catch (error) {
-    console.error('Erro ao salvar Cloudflare Account ID:', error);
+    console.error('Erro ao salvar Supabase URL:', error);
     return false;
   }
 });
 
-ipcMain.handle('get-cloudflare-api-token', () => {
-  const encryptedToken = store.get('cloudflareApiToken');
-  if (!encryptedToken) return null;
+ipcMain.handle('get-supabase-key', () => {
+  const encryptedKey = store.get('supabaseKey');
+  if (!encryptedKey) return process.env.SUPABASE_KEY || null;
   try {
-    return CryptoJS.AES.decrypt(encryptedToken, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
+    return CryptoJS.AES.decrypt(encryptedKey, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
   } catch (error) {
-    console.error('Erro ao descriptografar Cloudflare API Token:', error);
+    console.error('Erro ao descriptografar Supabase key:', error);
     return null;
   }
 });
 
-ipcMain.handle('save-cloudflare-api-token', (event, apiToken) => {
+ipcMain.handle('save-supabase-key', (event, key) => {
   try {
-    const encrypted = CryptoJS.AES.encrypt(apiToken, ENCRYPTION_KEY).toString();
-    store.set('cloudflareApiToken', encrypted);
+    const encrypted = CryptoJS.AES.encrypt(key, ENCRYPTION_KEY).toString();
+    store.set('supabaseKey', encrypted);
     return true;
   } catch (error) {
-    console.error('Erro ao salvar Cloudflare API Token:', error);
+    console.error('Erro ao salvar Supabase key:', error);
     return false;
   }
 });
 
-// Novos handlers para o sistema de lote
 ipcMain.handle('clear-batch', () => {
   screenshotBatch = [];
   return true;
