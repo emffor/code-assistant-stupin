@@ -3,10 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 class AIService {
   static async uploadToSupabase(imgBase64Data) {
     try {
-      // Obter configurações de ambiente
-      const supabaseUrl = process.env.SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_KEY;
-      const supabaseBucket = process.env.SUPABASE_BUCKET || 'screenshots';
+      // Obter credenciais dos parâmetros
+      const supabaseUrl = window.electronAPI.getSupabaseUrl();
+      const supabaseKey = window.electronAPI.getSupabaseKey();
+      const supabaseBucket = 'screenshots';
+      
+      // Verificar se as credenciais existem
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Credenciais do Supabase não encontradas');
+      }
       
       // Criar cliente Supabase
       const supabase = createClient(supabaseUrl, supabaseKey);

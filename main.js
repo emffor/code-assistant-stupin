@@ -3,10 +3,11 @@ const path = require('path');
 const Store = require('electron-store');
 const CryptoJS = require('crypto-js');
 const screenshot = require('screenshot-desktop');
-require('dotenv').config();
+
+const ENCRYPTION_KEY = 'app-secretkey-changethis';
 
 const store = new Store({
-  encryptionKey: process.env.ENCRYPTION_KEY || 'app-secretkey-changethis',
+  encryptionKey: ENCRYPTION_KEY,
   name: 'settings'
 });
 
@@ -19,8 +20,6 @@ const DEFAULT_SHORTCUTS = {
   batchCapture: 'Alt+D',
   batchSend: 'Alt+F'
 };
-
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'app-secretkey-changethis';
 
 let mainWindow;
 let screenshotBatch = [];
@@ -285,7 +284,7 @@ ipcMain.handle('save-shortcuts', (event, shortcuts) => {
 });
 
 ipcMain.handle('get-supabase-url', () => {
-  return process.env.SUPABASE_URL || store.get('supabaseUrl');
+  return store.get('supabaseUrl');
 });
 
 ipcMain.handle('save-supabase-url', (event, url) => {
@@ -300,7 +299,7 @@ ipcMain.handle('save-supabase-url', (event, url) => {
 
 ipcMain.handle('get-supabase-key', () => {
   const encryptedKey = store.get('supabaseKey');
-  if (!encryptedKey) return process.env.SUPABASE_KEY || null;
+  if (!encryptedKey) return null;
   try {
     return CryptoJS.AES.decrypt(encryptedKey, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
   } catch (error) {

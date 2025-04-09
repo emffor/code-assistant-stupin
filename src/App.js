@@ -171,10 +171,9 @@ function App() {
            setIsProcessing(false);
            return;
         }
-        
-        // Definir env vars dinamicamente para o service
-        process.env.SUPABASE_URL = supabaseUrl;
-        process.env.SUPABASE_KEY = supabaseKey;
+                
+        await window.electronAPI.saveSupabaseUrl(supabaseUrl);
+        await window.electronAPI.saveSupabaseKey(supabaseKey);
         
         const imageUrl = await AIService.uploadToSupabase(croppedImgBase64);
         if (!imageUrl) {
@@ -204,8 +203,8 @@ function App() {
         const image = await createImageFromBase64(item.imgBase64);
         const croppedBase64 = cropImageWithCanvas(image, item.bounds);
         
-        process.env.SUPABASE_URL = supabaseUrl;
-        process.env.SUPABASE_KEY = supabaseKey;
+        await window.electronAPI.saveSupabaseUrl(supabaseUrl);
+        await window.electronAPI.saveSupabaseKey(supabaseKey);
         
         const imageUrl = await AIService.uploadToSupabase(croppedBase64);
         const aiResult = await AIService.generateSolutionFromUrl(imageUrl, apiKey);
