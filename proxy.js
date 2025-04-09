@@ -1,10 +1,22 @@
+// Helper para converter ArrayBuffer para Base64 em ambiente Worker
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  // btoa é geralmente disponível em Workers
+  return btoa(binary);
+}
+
 addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request))
 })
 
 async function handleRequest(request) {
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': '*', // Considere restringir em produção
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
     'Content-Type': 'application/json',
@@ -24,36 +36,52 @@ async function handleRequest(request) {
         return new Response(JSON.stringify({ error: 'API Key missing' }), { status: 401, headers });
     }
 
+    // Espera payload com prompt e imageUrl
     const requestData = await request.json();
-    const { prompt, imageBase64, model } = requestData;
+    const { prompt, imageUrl, model } = requestData; // model é opcional, pode definir padrão
 
-    if (!prompt || !imageBase64) {
-        return new Response(JSON.stringify({ error: 'Missing prompt or imageBase64 in request body' }), { status: 400, headers });
+    if (!prompt || !imageUrl) {
+        return new Response(JSON.stringify({ error: 'Missing prompt or imageUrl in request body' }), { status: 400, headers });
     }
 
-    const geminiModel = model || 'gemini-pro-vision';
+    // 1. Busca a imagem do Cloudflare URL
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      return new Response(JSON.stringify({ error: `Failed to fetch image from URL: ${imageResponse.statusText}` }), { status: 502, headers }); // Bad Gateway
+    }
+    const imageBlob = await imageResponse.blob();
+    if (!imageBlob) {
+       return new Response(JSON.stringify({ error: 'Failed to get image blob from URL' }), { status: 500, headers });
+    }
+    const imageArrayBuffer = await imageBlob.arrayBuffer();
+    const imageBase64 = arrayBufferToBase64(imageArrayBuffer);
+    const mimeType = imageBlob.type || 'image/png'; 
+
+    const geminiModel = model || 'gemini-2.5-pro-preview-03-25'; 
     const geminiPayload = {
       contents: [{
         parts: [
           { text: prompt },
           {
             inline_data: {
-              mime_type: 'image/png',
+              mime_type: mimeType,
               data: imageBase64
             }
           }
         ]
       }],
       generationConfig: { 
-         temperature: 0.4,
-         maxOutputTokens: 4096,
+         // temperature: 0.4,
+         // topK: 32,
+         // topP: 1,
+         // maxOutputTokens: 4096,
       },
-      safetySettings: [ 
-        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-      ]
+       safetySettings: [ 
+         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+         { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+         { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+       ]
     };
 
     const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
@@ -82,9 +110,14 @@ async function handleRequest(request) {
         solution = geminiData.candidates[0].content.parts[0].text;
     } else if (geminiData.promptFeedback && geminiData.promptFeedback.blockReason) {
         solution = `Content blocked by Gemini: ${geminiData.promptFeedback.blockReason}`;
+        if (geminiData.promptFeedback.safetyRatings) {
+             solution += ` Ratings: ${JSON.stringify(geminiData.promptFeedback.safetyRatings)}`;
+        }
+         console.warn("Gemini content blocked:", geminiData.promptFeedback);
     } else {
         console.error("Unexpected Gemini response structure:", JSON.stringify(geminiData, null, 2));
     }
+
 
     return new Response(
       JSON.stringify({ solution: solution }), 
