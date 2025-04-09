@@ -28,12 +28,6 @@ function App() {
   const [lastBatchTimestamp, setLastBatchTimestamp] = useState(null);
 
   useEffect(() => {
-    if (typeof window.electronAPI === 'undefined') {
-      console.error('electronAPI não disponível!');
-      setError('Falha ao conectar com Electron (electronAPI não disponível)');
-      return;
-    }
-    
     loadSettings();
     
     // Listeners existentes
