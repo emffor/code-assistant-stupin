@@ -53,7 +53,7 @@ async function handleRequest(request) {
     const imageBase64 = arrayBufferToBase64(imageArrayBuffer);
     const mimeType = imageBlob.type || 'image/png'; 
 
-    const geminiModel = model || 'gemini-2.5-pro-preview-03-25'; 
+    const geminiModel = model || 'gemini-2.0-flash-lite'; 
     const geminiPayload = {
       contents: [{
         parts: [
