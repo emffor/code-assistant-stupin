@@ -6,7 +6,7 @@
 mkdir code-assistant
 cd code-assistant
 npm init -y
-npm install electron electron-builder react react-dom react-router-dom electron-store crypto-js node-tesseract-ocr screenshot-desktop
+npm install electron electron-builder react react-dom react-router-dom electron-store crypto-js node-tesseract-ocr screenshot-desktop @supabase/supabase-js
 ```
 
 ## 2. Estrutura de Arquivos
@@ -259,214 +259,97 @@ export default OCRService;
 
 ### src/services/AIService.js
 ```javascript
+import { createClient } from '@supabase/supabase-js';
+
 class AIService {
-  static async generateSolution(codeText, apiKey) {
-    // Uso de Cloudflare Worker como proxy
-    const PROXY_URL = 'https://seu-worker.seu-nome.workers.dev';
-    
+  static async uploadToSupabase(imgBase64Data) {
     try {
-      const response = await fetch(PROXY_URL, {
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_KEY;
+      const supabaseBucket = process.env.SUPABASE_BUCKET || 'screenshots';
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const blob = await fetch(`data:image/png;base64,${imgBase64Data}`).then(res => res.blob());
+      const fileName = `screenshot_${Date.now()}.png`;
+      
+      const { data, error } = await supabase.storage
+        .from(supabaseBucket)
+        .upload(fileName, blob, {
+          contentType: 'image/png',
+          upsert: false
+        });
+      
+      if (error) throw new Error(`Supabase upload failed: ${error.message}`);
+      
+      const { data: urlData } = supabase.storage
+        .from(supabaseBucket)
+        .getPublicUrl(fileName);
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Erro no upload para Supabase:', error);
+      throw error;
+    }
+  }
+
+  static async generateSolutionFromUrl(imageUrl, apiKey) {
+    // Chamada direta para API Gemini
+    try {
+      const imageBase64 = await this.getImageAsBase64(imageUrl);
+      
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': apiKey // Enviado no header mas interceptado pelo worker
+          'x-goog-api-key': apiKey
         },
         body: JSON.stringify({
-          text: codeText,
-          model: 'gemini-pro'
+          contents: [{
+            parts: [
+              { text: "Analise esta imagem de código e sugira uma solução para o problema. Seja conciso e direto." },
+              {
+                inlineData: {
+                  mimeType: 'image/png',
+                  data: imageBase64
+                }
+              }
+            ]
+          }]
         })
       });
       
       if (!response.ok) {
-        throw new Error('Falha na API');
+        throw new Error('Falha na API Gemini');
       }
       
       const data = await response.json();
-      return data.solution;
+      return data.candidates[0].content.parts[0].text;
     } catch (error) {
       console.error('Erro API:', error);
       return 'Não foi possível gerar uma solução.';
     }
+  }
+  
+  static async getImageAsBase64(imageUrl) {
+    const response = await fetch(imageUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    return this.arrayBufferToBase64(arrayBuffer);
+  }
+  
+  static arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
   }
 }
 
 export default AIService;
 ```
 
-## 5. Worker Cloudflare (proxy.js)
-```javascript
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
-})
-
-async function handleRequest(request) {
-  // CORS headers
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type,X-API-Key',
-    'Content-Type': 'application/json'
-  }
-  
-  // Responde ao preflight
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { headers })
-  }
-  
-  try {
-    // Extrai dados da solicitação
-    const apiKey = request.headers.get('X-API-Key')
-    const { text } = await request.json()
-    
-    // Chamada para API Gemini (Google AI)
-    const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `Analise este código e sugira uma solução para o problema. Seja conciso e direto:\n\n${text}`
-          }]
-        }]
-      })
-    })
-    
-    const geminiData = await geminiResponse.json()
-    
-    // Extrai o texto da resposta
-    const solution = geminiData.candidates[0].content.parts[0].text
-    
-    return new Response(
-      JSON.stringify({ solution }),
-      { headers }
-    )
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: 'Falha no processamento' }),
-      { status: 500, headers }
-    )
-  }
-}
-```
-
-## 6. Estilo CSS Básico
-```css
-/* src/App.css */
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
-  overflow: hidden;
-}
-
-.app {
-  background-color: rgba(30, 30, 30, 0.9);
-  color: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  width: 100vw;
-  height: 100vh;
-  -webkit-app-region: drag; /* Permite mover a janela */
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px;
-  background-color: rgba(20, 20, 20, 0.8);
-}
-
-.header button {
-  -webkit-app-region: no-drag; /* Permite clicar no botão */
-  background: none;
-  border: none;
-  color: #ddd;
-  cursor: pointer;
-}
-
-.preview {
-  padding: 10px;
-  text-align: center;
-  max-height: 150px;
-  overflow: hidden;
-}
-
-.preview img {
-  max-width: 100%;
-  max-height: 120px;
-  object-fit: contain;
-  border-radius: 4px;
-}
-
-.solution-area {
-  padding: 10px;
-  margin: 5px;
-  background-color: rgba(40, 40, 40, 0.7);
-  border-radius: 4px;
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-}
-
-.solution-area pre {
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-}
-
-.capture-btn {
-  -webkit-app-region: no-drag;
-  display: block;
-  margin: 10px auto;
-  padding: 8px 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.capture-btn:hover {
-  background-color: #0069d9;
-}
-
-.capture-btn:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
-
-.settings-modal {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.settings-modal input {
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background-color: #333;
-  color: white;
-}
-
-.settings-modal button {
-  -webkit-app-region: no-drag;
-  padding: 8px;
-  border-radius: 4px;
-  border: none;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  margin-top: 5px;
-}
-```
-
-## 7. Empacotamento
+## 5. Empacotamento
 Adicione ao package.json:
 
 ```json
@@ -498,7 +381,7 @@ Adicione ao package.json:
 }
 ```
 
-## 8. Próximos Passos
+## 6. Próximos Passos
 
 1. Implementar interface React completa
 2. Adicionar transição de opacidade para modo discreto
