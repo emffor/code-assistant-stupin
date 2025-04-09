@@ -1,4 +1,3 @@
-// Helper para converter ArrayBuffer para Base64 em ambiente Worker
 function arrayBufferToBase64(buffer) {
   let binary = '';
   const bytes = new Uint8Array(buffer);
@@ -6,7 +5,6 @@ function arrayBufferToBase64(buffer) {
   for (let i = 0; i < len; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
-  // btoa é geralmente disponível em Workers
   return btoa(binary);
 }
 
@@ -16,7 +14,7 @@ addEventListener('fetch', event => {
 
 async function handleRequest(request) {
   const headers = {
-    'Access-Control-Allow-Origin': '*', // Considere restringir em produção
+    'Access-Control-Allow-Origin': '*', 
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
     'Content-Type': 'application/json',
@@ -36,15 +34,13 @@ async function handleRequest(request) {
         return new Response(JSON.stringify({ error: 'API Key missing' }), { status: 401, headers });
     }
 
-    // Espera payload com prompt e imageUrl
     const requestData = await request.json();
-    const { prompt, imageUrl, model } = requestData; // model é opcional, pode definir padrão
+    const { prompt, imageUrl, model } = requestData; 
 
     if (!prompt || !imageUrl) {
         return new Response(JSON.stringify({ error: 'Missing prompt or imageUrl in request body' }), { status: 400, headers });
     }
 
-    // 1. Busca a imagem do Cloudflare URL
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
       return new Response(JSON.stringify({ error: `Failed to fetch image from URL: ${imageResponse.statusText}` }), { status: 502, headers }); // Bad Gateway
