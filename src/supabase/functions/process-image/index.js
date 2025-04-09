@@ -1,3 +1,5 @@
+// src/supabase/functions/process-image/index.js
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 function arrayBufferToBase64(buffer) {
@@ -40,7 +42,7 @@ serve(async (req) => {
     const imageBase64 = arrayBufferToBase64(imageArrayBuffer)
     const mimeType = imageResponse.headers.get('content-type') || 'image/png'
 
-    const geminiModel = model || 'gemini-pro-vision'
+    const geminiModel = model || 'gemini-2.0-flash-lite'
     const geminiPayload = {
       contents: [{
         parts: [
@@ -53,7 +55,12 @@ serve(async (req) => {
           }
         ]
       }],
-      generationConfig: {},
+      generationConfig: {
+        temperature: 0.4,
+        topK: 32,
+        topP: 1,
+        maxOutputTokens: 4096
+      },
       safetySettings: [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
@@ -62,7 +69,7 @@ serve(async (req) => {
       ]
     }
 
-    const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`
+    const geminiApiUrl = `https://generativelanguage.googleapis.com/v1/models/${geminiModel}:generateContent?key=${apiKey}`
 
     const geminiResponse = await fetch(geminiApiUrl, {
       method: 'POST',

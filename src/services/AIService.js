@@ -3,24 +3,19 @@ import { createClient } from '@supabase/supabase-js';
 class AIService {
   static async uploadToSupabase(imgBase64Data) {
     try {
-      // Obter credenciais dos parâmetros
-      const supabaseUrl = window.electronAPI.getSupabaseUrl();
-      const supabaseKey = window.electronAPI.getSupabaseKey();
+      const supabaseUrl = await window.electronAPI.getSupabaseUrl();
+      const supabaseKey = await window.electronAPI.getSupabaseKey();
       const supabaseBucket = 'screenshots';
       
-      // Verificar se as credenciais existem
       if (!supabaseUrl || !supabaseKey) {
         throw new Error('Credenciais do Supabase não encontradas');
       }
       
-      // Criar cliente Supabase
       const supabase = createClient(supabaseUrl, supabaseKey);
       
-      // Converter base64 para blob
       const blob = await fetch(`data:image/png;base64,${imgBase64Data}`).then(res => res.blob());
       const fileName = `screenshot_${Date.now()}.png`;
       
-      // Upload para storage do Supabase
       const { data, error } = await supabase.storage
         .from(supabaseBucket)
         .upload(fileName, blob, {
@@ -30,7 +25,6 @@ class AIService {
       
       if (error) throw new Error(`Supabase upload failed: ${error.message}`);
       
-      // Obter URL pública
       const { data: urlData } = supabase.storage
         .from(supabaseBucket)
         .getPublicUrl(fileName);
@@ -44,8 +38,7 @@ class AIService {
 
   static async generateSolutionFromUrl(imageUrl, apiKey) {
     try {
-      // Chamada direta para API Gemini
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent', {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +94,6 @@ class AIService {
     }
   }
 
-  // Função auxiliar para obter imagem como base64
   static async getImageAsBase64(imageUrl) {
     try {
       const response = await fetch(imageUrl);
@@ -113,7 +105,6 @@ class AIService {
     }
   }
 
-  // Converte ArrayBuffer para Base64
   static arrayBufferToBase64(buffer) {
     let binary = '';
     const bytes = new Uint8Array(buffer);
@@ -128,7 +119,7 @@ class AIService {
       const mode = this.detectCodeType(codeText);
       const prompt = this.generatePrompt(codeText, mode);
 
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
